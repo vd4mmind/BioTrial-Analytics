@@ -1,0 +1,5 @@
+{
+  "name": "BioTrial Analytics",
+  "description": "A clinical trial visualization dashboard for analyzing biomarker trends across study arms using simulated or uploaded data.",
+  "requestFramePermissions": []
+}

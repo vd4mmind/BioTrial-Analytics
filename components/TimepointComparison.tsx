@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import {
   BarChart,
@@ -16,6 +17,7 @@ import {
 import { Download, Sigma, TrendingUp, BarChart as BarChartIcon, Table as TableIcon, Info } from 'lucide-react';
 import { Arm, BiomarkerDef, PatientData, Timepoint } from '../types';
 import { ARM_COLORS } from '../constants';
+import { analytics } from '../services/analytics';
 
 interface TimepointComparisonProps {
   data: PatientData[];
@@ -130,6 +132,8 @@ export const TimepointComparison: React.FC<TimepointComparisonProps> = ({ data, 
   }, [processedData]);
 
   const handleExportCSV = () => {
+    analytics.logEvent('DATA_EXPORT', { biomarker: biomarker.id, type: 'CSV' });
+    
     const headers = ['Timepoint', 'Arm', 'N', `Mean Change ${showPercentChange ? '(%)' : `(${biomarker.unit})`}`, 'SEM'];
     const csvRows = [headers.join(',')];
 

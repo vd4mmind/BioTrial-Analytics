@@ -10,6 +10,9 @@ import { TimepointComparison } from './components/TimepointComparison';
 import { AddBiomarkerModal } from './components/AddBiomarkerModal';
 import { PowerCalculator } from './components/PowerCalculator';
 import { AboutModal } from './components/AboutModal';
+import { FeedbackModal } from './components/FeedbackModal';
+import { AdminStatsModal } from './components/AdminStatsModal';
+import { analytics } from './services/analytics';
 import { 
   LayoutDashboard, 
   Activity, 
@@ -23,7 +26,9 @@ import {
   Layers,
   Plus,
   Calculator,
-  BarChart2
+  BarChart2,
+  MessageSquare,
+  Shield
 } from 'lucide-react';
 
 // --- Helper Functions for Data Processing ---
@@ -124,7 +129,8 @@ const Header: React.FC<{
   onUpload: (data: PatientData[]) => void; 
   activeTab: 'dashboard' | 'power';
   setActiveTab: (t: 'dashboard' | 'power') => void;
-}> = ({ onRegenerate, onUpload, activeTab, setActiveTab }) => {
+  onOpenFeedback: () => void;
+}> = ({ onRegenerate, onUpload, activeTab, setActiveTab, onOpenFeedback }) => {
   const [showInfo, setShowInfo] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,6 +171,7 @@ const Header: React.FC<{
         const processedData = calculateDerivedMetrics(rawData);
         
         onUpload(processedData);
+        analytics.logEvent('DATA_UPLOAD', { fileName, patientCount: processedData.length });
         alert(`Successfully uploaded records for ${processedData.length} patients.`);
 
       } catch (err) {
@@ -246,6 +253,14 @@ const Header: React.FC<{
               <Info size={20} />
             </button>
 
+             <button
+              className="ml-1 p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-all"
+              onClick={onOpenFeedback}
+              title="Give Feedback"
+            >
+              <MessageSquare size={20} />
+            </button>
+
             {/* Data Format Tooltip */}
             <div 
               className={`absolute top-full right-0 mt-4 w-96 bg-white p-5 rounded-xl shadow-2xl border border-slate-200 text-slate-600 z-50 transition-all duration-200 transform origin-top-right ${showInfo ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}`}
@@ -299,7 +314,7 @@ const Header: React.FC<{
   );
 };
 
-const Footer: React.FC = () => (
+const Footer: React.FC<{ onOpenAdmin: () => void }> = ({ onOpenAdmin }) => (
   <footer className="bg-slate-900 text-slate-400 py-10 border-t border-slate-800 mt-auto">
     <div className="container mx-auto px-6 max-w-7xl">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -336,8 +351,11 @@ const Footer: React.FC = () => (
              </div>
         </div>
       </div>
-      <div className="mt-8 pt-8 border-t border-slate-800 text-center text-xs text-slate-600">
-        &copy; {new Date().getFullYear()} BioTrial Analytics. All rights reserved.
+      <div className="mt-8 pt-8 border-t border-slate-800 text-center text-xs text-slate-600 flex justify-between items-center">
+        <span>&copy; {new Date().getFullYear()} BioTrial Analytics. All rights reserved.</span>
+        <button onClick={onOpenAdmin} className="text-slate-700 hover:text-slate-500 flex items-center gap-1 transition-colors">
+          <Shield size={12} /> Admin
+        </button>
       </div>
     </div>
   </footer>
@@ -356,9 +374,17 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(true);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+
+  // Track tab switching
+  useEffect(() => {
+    analytics.logEvent('TAB_SWITCH', { tab: activeTab });
+  }, [activeTab]);
 
   const loadData = useCallback(() => {
     setLoading(true);
+    analytics.logEvent('SIMULATION_RUN');
     // Simulate async loading
     setTimeout(() => {
       // Generate data using current list of biomarkers
@@ -385,6 +411,8 @@ const App: React.FC = () => {
 
     // 3. Select the new biomarker
     setSelectedBiomarkerId(newBio.id);
+    
+    analytics.logEvent('PAGE_VIEW', { action: 'ADD_BIOMARKER', name: newBio.name });
   };
 
   const activeBiomarker = biomarkers.find(b => b.id === selectedBiomarkerId) || biomarkers[0];
@@ -396,6 +424,7 @@ const App: React.FC = () => {
         onUpload={(uploadedData) => setData(uploadedData)} 
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        onOpenFeedback={() => setIsFeedbackModalOpen(true)}
       />
 
       <main className="container mx-auto px-6 py-8 max-w-7xl flex-grow">
@@ -539,7 +568,7 @@ const App: React.FC = () => {
 
       </main>
       
-      <Footer />
+      <Footer onOpenAdmin={() => setIsAdminModalOpen(true)} />
 
       <AddBiomarkerModal 
         isOpen={isAddModalOpen}
@@ -550,6 +579,16 @@ const App: React.FC = () => {
       <AboutModal 
         isOpen={isAboutModalOpen}
         onClose={() => setIsAboutModalOpen(false)}
+      />
+
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+      />
+
+      <AdminStatsModal 
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
       />
     </div>
   );

@@ -1,6 +1,12 @@
-# <img src="./logo.svg" height="40" valign="middle" alt="BioTrial Analytics Logo" /> BioTrial Analytics
-
-**BioTrial Analytics** is a comprehensive clinical trial visualization dashboard designed for analyzing biomarker trends across study arms. It serves as a powerful prototype for visualizing longitudinal data, calculating efficacy metrics, and performing statistical power analysis for Phase II/III clinical studies.
+<div align="center">
+  <img src="./logo.svg" alt="BioTrial Analytics Logo" width="350" />
+  <br />
+  <br />
+  <h1>BioTrial Analytics</h1>
+  <p>
+    <b>A clinical trial visualization dashboard for analyzing biomarker trends across study arms.</b>
+  </p>
+</div>
 
 ---
 

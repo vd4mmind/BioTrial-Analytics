@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateSimulatedData, augmentDataWithBiomarker } from './services/simulation';
+import { generateSimulatedData, augmentDataWithBiomarker, SimulationScenario } from './services/simulation';
 import { PatientData, BiomarkerDef, Timepoint, Arm, Measurement } from './types';
 import { BIOMARKERS, TIMEPOINT_ORDER } from './constants';
 import { TrendChart } from './components/TrendChart';
@@ -28,7 +28,8 @@ import {
   Calculator,
   BarChart2,
   MessageSquare,
-  Shield
+  Shield,
+  Settings
 } from 'lucide-react';
 
 // --- Helper Functions for Data Processing ---
@@ -130,7 +131,9 @@ const Header: React.FC<{
   activeTab: 'dashboard' | 'power';
   setActiveTab: (t: 'dashboard' | 'power') => void;
   onOpenFeedback: () => void;
-}> = ({ onRegenerate, onUpload, activeTab, setActiveTab, onOpenFeedback }) => {
+  simulationScenario: SimulationScenario;
+  setSimulationScenario: (s: SimulationScenario) => void;
+}> = ({ onRegenerate, onUpload, activeTab, setActiveTab, onOpenFeedback, simulationScenario, setSimulationScenario }) => {
   const [showInfo, setShowInfo] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,14 +223,25 @@ const Header: React.FC<{
 
         <div className="flex items-center gap-3">
           {activeTab === 'dashboard' && (
-            <button 
-              onClick={onRegenerate}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-            >
-              <RefreshCw size={16} />
-              <span className="hidden lg:inline">Simulate New Cohort</span>
-              <span className="lg:hidden">Simulate</span>
-            </button>
+            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+              <select 
+                value={simulationScenario}
+                onChange={(e) => setSimulationScenario(e.target.value as SimulationScenario)}
+                className="bg-transparent text-sm font-medium text-slate-700 px-2 py-1 outline-none border-r border-slate-200 cursor-pointer hidden xl:block max-w-[120px]"
+                title="Simulation Scenario"
+              >
+                 {Object.values(SimulationScenario).map(s => (
+                   <option key={s} value={s}>{s}</option>
+                 ))}
+              </select>
+              <button 
+                onClick={onRegenerate}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-white hover:text-indigo-600 rounded-md transition-all shadow-sm hover:shadow"
+              >
+                <RefreshCw size={16} />
+                <span className="hidden lg:inline">Simulate</span>
+              </button>
+            </div>
           )}
           
           <div className="relative flex items-center group">
@@ -376,6 +390,9 @@ const App: React.FC = () => {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(true);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  
+  // Simulation State
+  const [simulationScenario, setSimulationScenario] = useState<SimulationScenario>(SimulationScenario.STANDARD_EFFICACY);
 
   // Track tab switching
   useEffect(() => {
@@ -384,15 +401,15 @@ const App: React.FC = () => {
 
   const loadData = useCallback(() => {
     setLoading(true);
-    analytics.logEvent('SIMULATION_RUN');
+    analytics.logEvent('SIMULATION_RUN', { scenario: simulationScenario });
     // Simulate async loading
     setTimeout(() => {
-      // Generate data using current list of biomarkers
-      const newData = generateSimulatedData(600, biomarkers);
+      // Generate data using current list of biomarkers and selected scenario
+      const newData = generateSimulatedData(600, biomarkers, simulationScenario);
       setData(newData);
       setLoading(false);
     }, 600);
-  }, [biomarkers]);
+  }, [biomarkers, simulationScenario]);
 
   useEffect(() => {
     // Initial load
@@ -425,6 +442,8 @@ const App: React.FC = () => {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
+        simulationScenario={simulationScenario}
+        setSimulationScenario={setSimulationScenario}
       />
 
       <main className="container mx-auto px-6 py-8 max-w-7xl flex-grow">
@@ -437,7 +456,11 @@ const App: React.FC = () => {
               <div className="text-sm">
                 <strong>Study Design:</strong> Randomized, Double-Blind, Placebo-Controlled (1:1:1). N=600. 
                 Analyzing efficacy of Drug X (1mg vs 2mg) vs Placebo over 24 weeks.
-                Data standardized to baseline for comparability.
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide">
+                    Scenario: {simulationScenario}
+                  </span>
+                </div>
               </div>
             </div>
 

@@ -48,7 +48,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
               <div>
                 <h4 className="font-semibold text-slate-900 text-lg">Simulated Cohorts</h4>
                 <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                  Generate realistic Phase IIb data for N=600 patients across Placebo and Treatment arms instantly.
+                  Generate realistic trial data (N=600) with configurable scenarios: Standard Efficacy, Mixed Results, or Failed Trial.
                 </p>
               </div>
             </div>
@@ -60,7 +60,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
               <div>
                 <h4 className="font-semibold text-slate-900 text-lg">Advanced Analytics</h4>
                 <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                  Visualize longitudinal trends, efficacy heatmaps, and calculate Area Under the Curve (AUC).
+                  Visualize longitudinal trends, efficacy heatmaps, and calculate Area Under the Curve (AUC) using trapezoidal rules.
                 </p>
               </div>
             </div>
@@ -72,7 +72,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
               <div>
                 <h4 className="font-semibold text-slate-900 text-lg">Power Calculator</h4>
                 <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                  Plan studies with a built-in statistical engine for sample size estimation based on assay CVs.
+                  Plan studies for ELISA, Olink, and SomaScan. Accounts for biological variance and multiple testing correction.
                 </p>
               </div>
             </div>

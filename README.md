@@ -1,3 +1,4 @@
+
 <div align="center">
   <img src="./logo.svg" alt="BioTrial Analytics Logo" width="120" />
   <br />
@@ -14,24 +15,37 @@
 
 ### 1. **Simulated Cohorts (Data Dashboard)**
    - Instantly generate realistic Phase IIb clinical trial data for **N=600 patients**.
+   - **Configurable Scenarios**:
+     - **Standard Efficacy**: Clear separation between drug and placebo.
+     - **Mixed Results**: Simulates subpopulations where the drug fails.
+     - **Failed Trial**: No statistical difference between arms.
+     - **High Placebo**: Strong placebo response masking drug effect.
    - Comparison across three arms: **Placebo**, **Drug X 1mg**, and **Drug X 2mg**.
-   - Data is standardized to baseline to simulate realistic variance and treatment effects.
 
 ### 2. **Advanced Analytics & Visualization**
-   - **Trend Charts**: Longitudinal line charts showing Mean ± SEM over 24 weeks.
+   - **Trend Charts**: Longitudinal line charts showing Mean ± SEM over 24 weeks (supports Log Scale).
    - **Distribution Plots**: Scatter plots to visualize patient-level variability.
    - **Efficacy Heatmaps**: At-a-glance view of % change across all biomarkers.
    - **AUC Analysis**: Automatic calculation of **Area Under the Curve** using the trapezoidal rule to quantify sustained treatment effects.
 
 ### 3. **Statistical Power Calculator**
-   - A dedicated module for planning future studies.
-   - Calculate required **Sample Size (N)** based on:
-     - Assay Type (ELISA, MSD, Olink)
-     - Coefficient of Variation (CV)
-     - Expected Effect Size (%)
-   - Interactive **Power Curve** visualization.
+   - A robust statistical engine for planning biomarker studies.
+   - **Supported Platforms**:
+     - **ELISA / Immunoassays** (Low Plex)
+     - **Olink Flex** (Targeted Panel)
+     - **Olink Explore HT** (High-Plex Proteomics)
+     - **SomaScan** (Aptamer-based Proteomics)
+   - **Advanced Logic**:
+     - Accounts for **Biological Variability** (Inter-patient heterogeneity) vs Technical Noise.
+     - Applies **Bonferroni Correction** for high-multiplex assays (e.g., adjusting Alpha for 7000+ analytes).
+     - Interactive **Power Curve** and Variance Breakdown.
 
-### 4. **Customizable Endpoints**
+### 4. **User Feedback & Tracking**
+   - Built-in **Usage Analytics** to track session time and event interactions.
+   - **Feedback System** allows users to rate the application and submit comments.
+   - **Admin Dashboard** (accessible via footer) to view aggregated stats and logs.
+
+### 5. **Customizable Endpoints**
    - Add custom biomarkers dynamically.
    - Define specific units, directionality (Lower vs. Higher is better), and baseline means.
 
@@ -41,17 +55,19 @@
 
 ### **Navigating the Dashboard**
 1. **Toggle Views**: Use the top navigation tabs to switch between the **Analytics Dashboard** and the **Power Calculator**.
-2. **Simulate Data**: Click the `Simulate New Cohort` button to regenerate the patient dataset with new random seeds.
+2. **Simulate Data**: 
+   - Select a scenario (e.g., "Mixed Results") from the dropdown.
+   - Click `Simulate` to regenerate the patient dataset.
 3. **Deep Dive**: 
    - Select a biomarker from the dropdown (e.g., hs-CRP, HbA1c).
-   - Choose a specific timepoint (Week 4, 12, 24).
    - Toggle between **Absolute Values** and **% Change from Baseline**.
+   - Switch between Bar Chart, Table, and **AUC Plot** views.
 
 ### **Using the Power Calculator**
-1. Select your **Study Phase** (Phase II vs III).
-2. Choose an **Assay Platform** (e.g., Olink, ELISA) to automatically set the Coefficient of Variation (CV), or adjust the slider manually.
-3. Input the **Control Mean** and **Expected Change (%)**.
-4. View the calculated **Required Sample Size** per arm and the dynamic Power Curve.
+1. Choose an **Assay Platform** (e.g., SomaScan, Olink Explore). The app automatically presets typical CVs and Analyte counts.
+2. Adjust **Biological CV** (Patient Heterogeneity) to see how it impacts the sample size more than technical noise.
+3. For High-Plex assays, observe how **Multiple Testing Correction** increases the required N.
+4. Use the **"Set as Reference"** feature to compare different study designs side-by-side.
 
 ---
 

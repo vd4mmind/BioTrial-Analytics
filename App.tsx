@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { generateSimulatedData, augmentDataWithBiomarker } from './services/simulation';
-import { PatientData, BiomarkerDef, Timepoint } from './types';
+import { PatientData, BiomarkerDef, Timepoint, Arm, Measurement } from './types';
 import { BIOMARKERS, TIMEPOINT_ORDER } from './constants';
 import { TrendChart } from './components/TrendChart';
 import { DistributionChart } from './components/DistributionChart';
@@ -26,11 +26,102 @@ import {
   BarChart2
 } from 'lucide-react';
 
-// --- Helper Components ---
+// --- Helper Functions for Data Processing ---
+
+const calculateDerivedMetrics = (patients: PatientData[]): PatientData[] => {
+  return patients.map(patient => {
+    // Group measurements by biomarker
+    const measurementsByBio: Record<string, Measurement[]> = {};
+    patient.measurements.forEach(m => {
+      if (!measurementsByBio[m.biomarkerId]) measurementsByBio[m.biomarkerId] = [];
+      measurementsByBio[m.biomarkerId].push(m);
+    });
+
+    const enrichedMeasurements: Measurement[] = [];
+
+    Object.keys(measurementsByBio).forEach(bioId => {
+      const bioMeasurements = measurementsByBio[bioId];
+      // Fix: Removed redundant check || m.timepoint === 'Baseline' which caused type narrowing issues
+      const baseline = bioMeasurements.find(m => m.timepoint === Timepoint.BASELINE);
+      const baselineVal = baseline ? baseline.value : undefined;
+
+      bioMeasurements.forEach(m => {
+        let change = 0;
+        let pct = 0;
+        
+        // If we have a baseline value, calculate metrics
+        if (baselineVal !== undefined && baselineVal !== 0) {
+           change = m.value - baselineVal;
+           pct = ((m.value - baselineVal) / baselineVal) * 100;
+        }
+
+        enrichedMeasurements.push({
+          ...m,
+          changeFromBaseline: m.changeFromBaseline ?? change,
+          percentChange: m.percentChange ?? pct
+        });
+      });
+    });
+
+    return {
+      ...patient,
+      measurements: enrichedMeasurements
+    };
+  });
+};
+
+const parseCSV = (content: string): PatientData[] => {
+  const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
+  if (lines.length < 2) throw new Error("CSV file is empty or missing headers.");
+
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+  const requiredFields = ['patientid', 'arm', 'biomarkerid', 'timepoint', 'value'];
+  
+  // Validate Headers
+  const missing = requiredFields.filter(field => !headers.includes(field));
+  if (missing.length > 0) {
+    throw new Error(`Missing required CSV headers: ${missing.join(', ')}`);
+  }
+
+  const idx = {
+    pid: headers.indexOf('patientid'),
+    arm: headers.indexOf('arm'),
+    bio: headers.indexOf('biomarkerid'),
+    tp: headers.indexOf('timepoint'),
+    val: headers.indexOf('value')
+  };
+
+  const patientMap = new Map<string, PatientData>();
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.trim());
+    if (cols.length < requiredFields.length) continue; // Skip incomplete lines
+
+    const pid = cols[idx.pid];
+    const arm = cols[idx.arm] as Arm;
+    const bioId = cols[idx.bio];
+    const tp = cols[idx.tp] as Timepoint;
+    const val = parseFloat(cols[idx.val]);
+
+    if (isNaN(val)) throw new Error(`Row ${i + 1}: Value '${cols[idx.val]}' is not a valid number.`);
+
+    if (!patientMap.has(pid)) {
+      patientMap.set(pid, { patientId: pid, arm, measurements: [] });
+    }
+
+    patientMap.get(pid)!.measurements.push({
+      biomarkerId: bioId,
+      timepoint: tp,
+      value: val
+    });
+  }
+
+  return Array.from(patientMap.values());
+};
 
 const Header: React.FC<{ 
   onRegenerate: () => void; 
-  onUpload: () => void; 
+  onUpload: (data: PatientData[]) => void; 
   activeTab: 'dashboard' | 'power';
   setActiveTab: (t: 'dashboard' | 'power') => void;
 }> = ({ onRegenerate, onUpload, activeTab, setActiveTab }) => {
@@ -41,16 +132,48 @@ const Header: React.FC<{
     if (!file) return;
 
     const fileName = file.name.toLowerCase();
-    if (!fileName.endsWith('.csv') && !fileName.endsWith('.json')) {
-      alert("Invalid file type. Please upload a .csv or .json file.");
-      event.target.value = ''; // Reset input
+    const isJson = fileName.endsWith('.json');
+    const isCsv = fileName.endsWith('.csv');
+
+    if (!isJson && !isCsv) {
+      alert("Invalid file format. Please upload a .csv or .json file.");
+      event.target.value = '';
       return;
     }
 
-    // Valid file
-    alert("Upload feature parses specifically formatted CSVs. For this prototype, please use the simulation engine.");
-    // In a real implementation, you would process the file here
-    event.target.value = ''; // Reset to allow re-upload
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        let rawData: PatientData[] = [];
+
+        if (isJson) {
+          const parsed = JSON.parse(content);
+          if (!Array.isArray(parsed)) throw new Error("JSON root must be an array of patients.");
+          // Basic structure check
+          if (parsed.length > 0 && (!parsed[0].patientId || !parsed[0].measurements)) {
+             throw new Error("Invalid JSON structure. Missing patientId or measurements.");
+          }
+          rawData = parsed;
+        } else {
+          rawData = parseCSV(content);
+        }
+
+        if (rawData.length === 0) throw new Error("No data found in file.");
+
+        // Calculate metrics required for charts (changeFromBaseline, etc.)
+        const processedData = calculateDerivedMetrics(rawData);
+        
+        onUpload(processedData);
+        alert(`Successfully uploaded records for ${processedData.length} patients.`);
+
+      } catch (err) {
+        alert(`Upload Failed: ${err instanceof Error ? err.message : 'Unknown error parsing file.'}`);
+      }
+    };
+
+    reader.readAsText(file);
+    event.target.value = ''; // Reset input
   };
 
   return (
@@ -270,7 +393,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 flex flex-col">
       <Header 
         onRegenerate={loadData} 
-        onUpload={() => {}} 
+        onUpload={(uploadedData) => setData(uploadedData)} 
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />

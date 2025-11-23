@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -20,6 +20,7 @@ interface TrendChartProps {
 }
 
 export const TrendChart: React.FC<TrendChartProps> = ({ data, biomarker, showPercentChange }) => {
+  const [isLogScale, setIsLogScale] = useState(false);
   
   // Calculate Mean and SEM for each Arm at each Timepoint
   const chartData = useMemo(() => {
@@ -63,17 +64,45 @@ export const TrendChart: React.FC<TrendChartProps> = ({ data, biomarker, showPer
   }, [data, biomarker.id, showPercentChange]);
 
   const yAxisLabel = showPercentChange ? '% Change from Baseline' : `${biomarker.name} (${biomarker.unit})`;
+  
+  // Log scale is only valid for absolute values (which are strictly positive in this app)
+  // Percent change contains negative values and zeros.
+  const showLogToggle = !showPercentChange;
+  const scaleType = showLogToggle && isLogScale ? 'log' : 'auto';
+  const domain = scaleType === 'log' ? ['auto', 'auto'] : ['auto', 'auto'];
 
   return (
     <div className="w-full h-[400px] bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-      <h3 className="text-lg font-semibold text-slate-800 mb-4">
-        {biomarker.name} - {showPercentChange ? 'Mean Percent Change' : 'Mean Absolute Value'} (±SEM)
-      </h3>
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-lg font-semibold text-slate-800">
+          {biomarker.name} - {showPercentChange ? 'Mean Percent Change' : 'Mean Absolute Value'} (±SEM)
+        </h3>
+        
+        {showLogToggle && (
+          <button
+            onClick={() => setIsLogScale(!isLogScale)}
+            className={`px-3 py-1 text-xs font-medium rounded-md border transition-colors ${
+              isLogScale 
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Log Scale {isLogScale ? 'ON' : 'OFF'}
+          </button>
+        )}
+      </div>
+
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickMargin={10} />
-          <YAxis stroke="#64748b" fontSize={12} label={{ value: yAxisLabel, angle: -90, position: 'insideLeft', offset: -10, style: {textAnchor: 'middle'} }} />
+          <YAxis 
+            scale={scaleType} 
+            domain={domain} 
+            stroke="#64748b" 
+            fontSize={12} 
+            label={{ value: yAxisLabel, angle: -90, position: 'insideLeft', offset: -10, style: {textAnchor: 'middle'} }} 
+          />
           <Tooltip 
             contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0' }}
             formatter={(value: number) => [value.toFixed(2), '']}

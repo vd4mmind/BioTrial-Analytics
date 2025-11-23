@@ -1,20 +1,98 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# <img src="./logo.svg" height="40" valign="middle" alt="BioTrial Analytics Logo" /> BioTrial Analytics
 
-# Run and deploy your AI Studio app
+**BioTrial Analytics** is a comprehensive clinical trial visualization dashboard designed for analyzing biomarker trends across study arms. It serves as a powerful prototype for visualizing longitudinal data, calculating efficacy metrics, and performing statistical power analysis for Phase II/III clinical studies.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/drive/11tJnF3JFGa1j3wEwpZSRyCPAtpQe_c2u
+## 🚀 Features
 
-## Run Locally
+### 1. **Simulated Cohorts (Data Dashboard)**
+   - Instantly generate realistic Phase IIb clinical trial data for **N=600 patients**.
+   - Comparison across three arms: **Placebo**, **Drug X 1mg**, and **Drug X 2mg**.
+   - Data is standardized to baseline to simulate realistic variance and treatment effects.
 
-**Prerequisites:**  Node.js
+### 2. **Advanced Analytics & Visualization**
+   - **Trend Charts**: Longitudinal line charts showing Mean ± SEM over 24 weeks.
+   - **Distribution Plots**: Scatter plots to visualize patient-level variability.
+   - **Efficacy Heatmaps**: At-a-glance view of % change across all biomarkers.
+   - **AUC Analysis**: Automatic calculation of **Area Under the Curve** using the trapezoidal rule to quantify sustained treatment effects.
 
+### 3. **Statistical Power Calculator**
+   - A dedicated module for planning future studies.
+   - Calculate required **Sample Size (N)** based on:
+     - Assay Type (ELISA, MSD, Olink)
+     - Coefficient of Variation (CV)
+     - Expected Effect Size (%)
+   - Interactive **Power Curve** visualization.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 4. **Customizable Endpoints**
+   - Add custom biomarkers dynamically.
+   - Define specific units, directionality (Lower vs. Higher is better), and baseline means.
+
+---
+
+## 📖 How to Use
+
+### **Navigating the Dashboard**
+1. **Toggle Views**: Use the top navigation tabs to switch between the **Analytics Dashboard** and the **Power Calculator**.
+2. **Simulate Data**: Click the `Simulate New Cohort` button to regenerate the patient dataset with new random seeds.
+3. **Deep Dive**: 
+   - Select a biomarker from the dropdown (e.g., hs-CRP, HbA1c).
+   - Choose a specific timepoint (Week 4, 12, 24).
+   - Toggle between **Absolute Values** and **% Change from Baseline**.
+
+### **Using the Power Calculator**
+1. Select your **Study Phase** (Phase II vs III).
+2. Choose an **Assay Platform** (e.g., Olink, ELISA) to automatically set the Coefficient of Variation (CV), or adjust the slider manually.
+3. Input the **Control Mean** and **Expected Change (%)**.
+4. View the calculated **Required Sample Size** per arm and the dynamic Power Curve.
+
+---
+
+## 🛠️ Tech Stack
+
+This application is built using a modern, type-safe, and performance-oriented stack:
+
+- **Frontend Framework**: [React 19](https://react.dev/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Visualization**: [Recharts](https://recharts.org/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Build Tool**: Vite
+
+---
+
+## 💻 Local Development
+
+To run this application locally on your machine:
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/biotrial-analytics.git
+   cd biotrial-analytics
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Start the Development Server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+4. Open your browser to `http://localhost:5173` (or the port shown in your terminal).
+
+---
+
+## 👤 Developer
+
+**Vivek Das**  
+*Functional Prototype Development*
+
+> *Disclaimer: This application is a functional prototype. All data presented is simulated for demonstration purposes only and should not be used for clinical decision-making.*

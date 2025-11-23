@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./logo.svg" alt="BioTrial Analytics Logo" width="350" />
+  <img src="./logo.svg" alt="BioTrial Analytics Logo" width="120" />
   <br />
   <br />
   <h1>BioTrial Analytics</h1>

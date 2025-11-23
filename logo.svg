@@ -1,12 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
   <!-- Icon Background -->
   <rect x="10" y="10" width="80" height="80" rx="20" fill="#4f46e5" />
   
   <!-- Pulse Line -->
   <path d="M25 50 L40 50 L50 30 L60 70 L70 50 L85 50" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
-  
-  <!-- Text -->
-  <text x="110" y="62" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="bold" fill="#1e293b">
-    BioTrial <tspan fill="#4f46e5">Analytics</tspan>
-  </text>
 </svg>

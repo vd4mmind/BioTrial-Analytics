@@ -115,16 +115,16 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ isOpen, onClos
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                 <h4 className="font-bold text-slate-800 mb-4">Event Distribution</h4>
                 <div className="space-y-3">
-                  {Object.entries(stats.eventCounts).sort(([,a], [,b]) => b - a).map(([key, count]) => (
+                  {Object.entries(stats.eventCounts).sort(([,a], [,b]) => (b as number) - (a as number)).map(([key, count]) => (
                     <div key={key}>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="font-medium text-slate-700">{key}</span>
-                        <span className="text-slate-500">{count}</span>
+                        <span className="text-slate-500">{count as number}</span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-2">
                         <div 
                           className="bg-indigo-500 h-2 rounded-full" 
-                          style={{ width: `${(count / events.length) * 100}%` }}
+                          style={{ width: `${((count as number) / (events.length || 1)) * 100}%` }}
                         ></div>
                       </div>
                     </div>

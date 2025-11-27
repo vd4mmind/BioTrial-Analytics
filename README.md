@@ -40,12 +40,18 @@
      - Applies **Bonferroni Correction** for high-multiplex assays (e.g., adjusting Alpha for 7000+ analytes).
      - Interactive **Power Curve** and Variance Breakdown.
 
-### 4. **User Feedback & Tracking**
+### 4. **Single Cell (scRNA-seq) Power Analysis**
+   - **Longitudinal Design**: Models power for paired designs (e.g., Baseline vs. End of Treatment) using **Pseudobulk Linear Mixed Models (LMM)**.
+   - **Dropout Modeling**: Simulates the loss of rare cell types based on sequencing depth and abundance, calculating an "Effective N".
+   - **Quality Control**: Configurable thresholds for **Resolution** (Genes/Cell), **Yield** (Cells/Sample), and **Cluster Size**.
+   - **Scenario Presets**: Quickly toggle between scenarios like "Deep Sequencing", "High Biological Variation", or "Rare Cell Detection".
+
+### 5. **User Feedback & Tracking**
    - Built-in **Usage Analytics** to track session time and event interactions.
    - **Feedback System** allows users to rate the application and submit comments.
    - **Admin Dashboard** (accessible via footer) to view aggregated stats and logs.
 
-### 5. **Customizable Endpoints**
+### 6. **Customizable Endpoints**
    - Add custom biomarkers dynamically.
    - Define specific units, directionality (Lower vs. Higher is better), and baseline means.
 
@@ -54,7 +60,7 @@
 ## 📖 How to Use
 
 ### **Navigating the Dashboard**
-1. **Toggle Views**: Use the top navigation tabs to switch between the **Analytics Dashboard** and the **Power Calculator**.
+1. **Toggle Views**: Use the top navigation tabs to switch between the **Analytics Dashboard**, **Power Calculator**, and **Single Cell**.
 2. **Simulate Data**: 
    - Select a scenario (e.g., "Mixed Results") from the dropdown.
    - Click `Simulate` to regenerate the patient dataset.
@@ -68,6 +74,11 @@
 2. Adjust **Biological CV** (Patient Heterogeneity) to see how it impacts the sample size more than technical noise.
 3. For High-Plex assays, observe how **Multiple Testing Correction** increases the required N.
 4. Use the **"Set as Reference"** feature to compare different study designs side-by-side.
+
+### **Using the Single Cell Planner**
+1. Define your **Biological Hypothesis** (Effect Size, Impacted Genes).
+2. Set **QC Thresholds** (Min Genes/Cell) to see how sequencing depth affects sample retention.
+3. Adjust **Experimental Design** (Patients, Timepoints) to maximize power for rare cell types.
 
 ---
 

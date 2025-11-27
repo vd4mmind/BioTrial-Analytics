@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Activity, BarChart2, Calculator, Database, Zap, ChevronRight } from 'lucide-react';
+import { X, Activity, BarChart2, Calculator, Database, Zap, ChevronRight, Dna } from 'lucide-react';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -35,7 +35,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="p-8 bg-white">
+        <div className="p-8 bg-white overflow-y-auto max-h-[60vh]">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-100 pb-2">
             Platform Capabilities
           </h3>
@@ -70,9 +70,21 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                 <Calculator size={24} />
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900 text-lg">Power Calculator</h4>
+                <h4 className="font-semibold text-slate-900 text-lg">Bulk Power Calc</h4>
                 <p className="text-sm text-slate-500 mt-1 leading-relaxed">
                   Plan studies for ELISA, Olink, and SomaScan. Accounts for biological variance and multiple testing correction.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 group">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-indigo-100">
+                <Dna size={24} />
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-900 text-lg">Single Cell (scRNA)</h4>
+                <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                  Design longitudinal single-cell trials. Model pseudobulk effects, QC dropouts, and sequencing depth constraints.
                 </p>
               </div>
             </div>

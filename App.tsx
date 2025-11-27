@@ -9,6 +9,7 @@ import { BiomarkerOverview } from './components/BiomarkerOverview';
 import { TimepointComparison } from './components/TimepointComparison';
 import { AddBiomarkerModal } from './components/AddBiomarkerModal';
 import { PowerCalculator } from './components/PowerCalculator';
+import { SingleCellPower } from './components/SingleCellPower';
 import { AboutModal } from './components/AboutModal';
 import { FeedbackModal } from './components/FeedbackModal';
 import { AdminStatsModal } from './components/AdminStatsModal';
@@ -29,7 +30,8 @@ import {
   BarChart2,
   MessageSquare,
   Shield,
-  Settings
+  Settings,
+  Dna
 } from 'lucide-react';
 
 // --- Helper Functions for Data Processing ---
@@ -128,8 +130,8 @@ const parseCSV = (content: string): PatientData[] => {
 const Header: React.FC<{ 
   onRegenerate: () => void; 
   onUpload: (data: PatientData[]) => void; 
-  activeTab: 'dashboard' | 'power';
-  setActiveTab: (t: 'dashboard' | 'power') => void;
+  activeTab: 'dashboard' | 'power' | 'singlecell';
+  setActiveTab: (t: 'dashboard' | 'power' | 'singlecell') => void;
   onOpenFeedback: () => void;
   simulationScenario: SimulationScenario;
   setSimulationScenario: (s: SimulationScenario) => void;
@@ -200,24 +202,33 @@ const Header: React.FC<{
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex bg-slate-100 p-1 rounded-lg self-start md:self-center">
+        <div className="flex bg-slate-100 p-1 rounded-lg self-start md:self-center overflow-x-auto max-w-full">
            <button
              onClick={() => setActiveTab('dashboard')}
-             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
                activeTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
              }`}
            >
              <BarChart2 size={16} />
-             Analytics Dashboard
+             Dashboard
            </button>
            <button
              onClick={() => setActiveTab('power')}
-             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
                activeTab === 'power' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
              }`}
            >
              <Calculator size={16} />
-             Power Calculator
+             Power Calc
+           </button>
+           <button
+             onClick={() => setActiveTab('singlecell')}
+             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
+               activeTab === 'singlecell' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+             }`}
+           >
+             <Dna size={16} />
+             Single Cell (scRNA)
            </button>
         </div>
 
@@ -378,7 +389,7 @@ const Footer: React.FC<{ onOpenAdmin: () => void }> = ({ onOpenAdmin }) => (
 // --- Main App ---
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'power'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'power' | 'singlecell'>('dashboard');
   
   const [biomarkers, setBiomarkers] = useState<BiomarkerDef[]>(BIOMARKERS);
   const [data, setData] = useState<PatientData[]>([]);
@@ -579,13 +590,21 @@ const App: React.FC = () => {
               )}
             </section>
           </>
-        ) : (
+        ) : activeTab === 'power' ? (
           <section>
              <div className="flex items-center gap-2 mb-6">
                 <Calculator className="text-indigo-600" size={20} />
                 <h2 className="text-xl font-bold text-slate-800">Sample Size & Power Calculator</h2>
              </div>
              <PowerCalculator />
+          </section>
+        ) : (
+          <section>
+             <div className="flex items-center gap-2 mb-6">
+                <Dna className="text-indigo-600" size={20} />
+                <h2 className="text-xl font-bold text-slate-800">Single Cell Longitudinal Power Analysis</h2>
+             </div>
+             <SingleCellPower />
           </section>
         )}
 

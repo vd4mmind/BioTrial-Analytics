@@ -1,6 +1,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateSimulatedData, augmentDataWithBiomarker, SimulationScenario } from './services/simulation';
+import { 
+  generateSimulatedData, 
+  augmentDataWithBiomarker, 
+  SimulationConfig, 
+  SCENARIO_PRESETS 
+} from './services/simulation';
 import { PatientData, BiomarkerDef, Timepoint, Arm, Measurement } from './types';
 import { BIOMARKERS, TIMEPOINT_ORDER } from './constants';
 import { TrendChart } from './components/TrendChart';
@@ -13,6 +18,7 @@ import { SingleCellPower } from './components/SingleCellPower';
 import { AboutModal } from './components/AboutModal';
 import { FeedbackModal } from './components/FeedbackModal';
 import { AdminStatsModal } from './components/AdminStatsModal';
+import { SimulationConfigCard } from './components/SimulationConfigCard';
 import { analytics } from './services/analytics';
 import { 
   LayoutDashboard, 
@@ -30,7 +36,6 @@ import {
   BarChart2,
   MessageSquare,
   Shield,
-  Settings,
   Dna
 } from 'lucide-react';
 
@@ -49,7 +54,6 @@ const calculateDerivedMetrics = (patients: PatientData[]): PatientData[] => {
 
     Object.keys(measurementsByBio).forEach(bioId => {
       const bioMeasurements = measurementsByBio[bioId];
-      // Fix: Removed redundant check || m.timepoint === 'Baseline' which caused type narrowing issues
       const baseline = bioMeasurements.find(m => m.timepoint === Timepoint.BASELINE);
       const baselineVal = baseline ? baseline.value : undefined;
 
@@ -128,14 +132,11 @@ const parseCSV = (content: string): PatientData[] => {
 };
 
 const Header: React.FC<{ 
-  onRegenerate: () => void; 
   onUpload: (data: PatientData[]) => void; 
   activeTab: 'dashboard' | 'power' | 'singlecell';
   setActiveTab: (t: 'dashboard' | 'power' | 'singlecell') => void;
   onOpenFeedback: () => void;
-  simulationScenario: SimulationScenario;
-  setSimulationScenario: (s: SimulationScenario) => void;
-}> = ({ onRegenerate, onUpload, activeTab, setActiveTab, onOpenFeedback, simulationScenario, setSimulationScenario }) => {
+}> = ({ onUpload, activeTab, setActiveTab, onOpenFeedback }) => {
   const [showInfo, setShowInfo] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,27 +234,6 @@ const Header: React.FC<{
         </div>
 
         <div className="flex items-center gap-3">
-          {activeTab === 'dashboard' && (
-            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
-              <select 
-                value={simulationScenario}
-                onChange={(e) => setSimulationScenario(e.target.value as SimulationScenario)}
-                className="bg-transparent text-sm font-medium text-slate-700 px-2 py-1 outline-none border-r border-slate-200 cursor-pointer hidden xl:block max-w-[120px]"
-                title="Simulation Scenario"
-              >
-                 {Object.values(SimulationScenario).map(s => (
-                   <option key={s} value={s}>{s}</option>
-                 ))}
-              </select>
-              <button 
-                onClick={onRegenerate}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-white hover:text-indigo-600 rounded-md transition-all shadow-sm hover:shadow"
-              >
-                <RefreshCw size={16} />
-                <span className="hidden lg:inline">Simulate</span>
-              </button>
-            </div>
-          )}
           
           <div className="relative flex items-center group">
             <label className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors shadow-md">
@@ -403,7 +383,7 @@ const App: React.FC = () => {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   
   // Simulation State
-  const [simulationScenario, setSimulationScenario] = useState<SimulationScenario>(SimulationScenario.STANDARD_EFFICACY);
+  const [simulationConfig, setSimulationConfig] = useState<SimulationConfig>(SCENARIO_PRESETS['Standard Efficacy']);
 
   // Track tab switching
   useEffect(() => {
@@ -412,15 +392,15 @@ const App: React.FC = () => {
 
   const loadData = useCallback(() => {
     setLoading(true);
-    analytics.logEvent('SIMULATION_RUN', { scenario: simulationScenario });
+    analytics.logEvent('SIMULATION_RUN', { scenario: simulationConfig.scenarioName });
     // Simulate async loading
     setTimeout(() => {
-      // Generate data using current list of biomarkers and selected scenario
-      const newData = generateSimulatedData(600, biomarkers, simulationScenario);
+      // Generate data using current list of biomarkers and selected config
+      const newData = generateSimulatedData(600, biomarkers, simulationConfig);
       setData(newData);
       setLoading(false);
     }, 600);
-  }, [biomarkers, simulationScenario]);
+  }, [biomarkers, simulationConfig]);
 
   useEffect(() => {
     // Initial load
@@ -434,7 +414,7 @@ const App: React.FC = () => {
     setBiomarkers(updatedBiomarkers);
 
     // 2. Augment existing patient data with simulated values for this new biomarker
-    const updatedData = augmentDataWithBiomarker(data, newBio);
+    const updatedData = augmentDataWithBiomarker(data, newBio, simulationConfig);
     setData(updatedData);
 
     // 3. Select the new biomarker
@@ -448,19 +428,24 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 flex flex-col">
       <Header 
-        onRegenerate={loadData} 
         onUpload={(uploadedData) => setData(uploadedData)} 
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
-        simulationScenario={simulationScenario}
-        setSimulationScenario={setSimulationScenario}
       />
 
       <main className="container mx-auto px-6 py-8 max-w-7xl flex-grow">
         
         {activeTab === 'dashboard' ? (
           <>
+            {/* Simulation Controls Card */}
+            <SimulationConfigCard 
+              config={simulationConfig}
+              onConfigChange={setSimulationConfig}
+              onRegenerate={loadData}
+              isLoading={loading}
+            />
+
             {/* Info Banner */}
             <div className="mb-8 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-3 text-blue-800 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
               <Info className="mt-0.5 shrink-0 text-blue-600" size={18} />
@@ -469,7 +454,7 @@ const App: React.FC = () => {
                 Analyzing efficacy of Drug X (1mg vs 2mg) vs Placebo over 24 weeks.
                 <div className="mt-1 flex items-center gap-2">
                   <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide">
-                    Scenario: {simulationScenario}
+                    Scenario: {simulationConfig.scenarioName}
                   </span>
                 </div>
               </div>

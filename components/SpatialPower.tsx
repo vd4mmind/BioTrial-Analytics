@@ -38,8 +38,12 @@ import {
   Play,
   Pause,
   ChevronRight,
-  Sigma
+  Sigma,
+  Download,
+  FileText,
+  Share2
 } from 'lucide-react';
+import { analytics } from '../services/analytics';
 
 // Statistical helper for normal distribution
 function getZScore(p: number): number {
@@ -139,7 +143,6 @@ export const SpatialPower: React.FC = () => {
   const currentTimepointLabel = TIMEPOINTS_MAP.find(t => t.count === numTimepoints)?.label || 'Wk 24';
 
   // --- Strict Constraint Logic ---
-  // Ensure visual and analysis timepoints never exceed the total planned study duration
   useEffect(() => {
     if (visualTimepoint > numTimepoints) {
       setVisualTimepoint(numTimepoints);
@@ -157,7 +160,6 @@ export const SpatialPower: React.FC = () => {
     const sigmaT2 = currentPlatform.technicalVariance / currentPlatform.captureEfficiency;
 
     const calculateForN = (N: number, S: number, T: number) => {
-      // Longitudinal Gain Factor (Inspired by PoweREST LMM approximations)
       const longitudinalGain = 1 + (T - 1) * 0.45;
       const se = Math.sqrt(
         (sigmaP2 / (N * longitudinalGain)) + 
@@ -168,7 +170,6 @@ export const SpatialPower: React.FC = () => {
       return Math.max(0, Math.min(1, getNormalProbability(z)));
     };
 
-    // Calculate curve for the SELECTED analysis timepoint (strictly capped by numTimepoints)
     const effectiveAnalysisT = Math.min(analysisTimepoint, numTimepoints);
     const powerCurve = [];
     for (let n = 4; n <= 80; n += 4) {
@@ -204,9 +205,8 @@ export const SpatialPower: React.FC = () => {
   // --- Visuals: Mock Tissue Canvas ---
   const tissueDots = useMemo(() => {
     const dots = [];
-    // Normalize time factor relative to the visual timepoint within the study scope
     const timeFactor = visualTimepoint / 4; 
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 250; i++) {
       const x = Math.random() * 100;
       const y = Math.random() * 100;
       const isTumor = x < 60;
@@ -219,6 +219,11 @@ export const SpatialPower: React.FC = () => {
     }
     return dots;
   }, [treatmentEffect, visualTimepoint]);
+
+  const handleDownload = (chartName: string) => {
+    analytics.logEvent('DATA_EXPORT', { chart: chartName, platform });
+    alert(`Generating high-resolution report for ${chartName}... In a production environment, this would download a PNG/SVG or PDF of the figure.`);
+  };
 
   return (
     <div className="animate-in fade-in duration-500 pb-12">
@@ -238,48 +243,40 @@ export const SpatialPower: React.FC = () => {
             Longitudinal Spatial Power Planner
           </h2>
           <p className="text-indigo-100 max-w-2xl opacity-90 leading-relaxed">
-            Assess statistical power for detecting disease remodeling in Spatial Transcriptomics (ST) trials. 
-            Optimized for hierarchical variance decomposition and multi-timepoint repeated measures.
+            Professional workbench for planning and budgeting high-resolution Spatial Transcriptomics trials with hierarchical variance structures.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         
-        {/* Left Column: Design Controls */}
+        {/* Left Column: Sidebar (Controls & Methodology) */}
         <div className="xl:col-span-4 space-y-6">
           
-          {/* Study Design (T=Overall Duration) */}
+          {/* Study Design Controls */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5 flex items-center gap-2">
               <Users size={16} className="text-indigo-500" />
-              Trial Design Configuration
+              Trial Parameters
             </h3>
             
             <div className="space-y-6">
               <div>
                 <div className="flex justify-between text-xs font-bold mb-2">
-                  <span className="text-slate-500">Planned Study Duration</span>
-                  <span className="text-indigo-600 font-mono">{currentTimepointLabel} (T={numTimepoints})</span>
+                  <span className="text-slate-500">Study Duration</span>
+                  <span className="text-indigo-600 font-mono bg-indigo-50 px-2 rounded">{currentTimepointLabel} (T={numTimepoints})</span>
                 </div>
                 <input 
                   type="range" min="1" max="4" step="1" 
-                  value={numTimepoints} onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    setNumTimepoints(val);
-                  }}
+                  value={numTimepoints} onChange={(e) => setNumTimepoints(parseInt(e.target.value))}
                   className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                 />
-                <div className="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
-                  <span>Wk 4</span>
-                  <span>Wk 52</span>
-                </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-xs font-bold mb-2">
-                  <span className="text-slate-500">Patients per Arm (N)</span>
-                  <span className="text-indigo-600 font-mono">{numPatients}</span>
+                  <span className="text-slate-500">Sample Size (N)</span>
+                  <span className="text-indigo-600 font-mono bg-indigo-50 px-2 rounded">{numPatients}</span>
                 </div>
                 <input 
                   type="range" min="4" max="80" step="4" 
@@ -290,276 +287,290 @@ export const SpatialPower: React.FC = () => {
 
               <div>
                 <div className="flex justify-between text-xs font-bold mb-2">
-                  <span className="text-slate-500">Slices per Subject/T</span>
-                  <span className="text-indigo-600 font-mono">{slicesPerPatient}</span>
+                  <span className="text-slate-500">Assay Platform</span>
                 </div>
-                <input 
-                  type="range" min="1" max="5" step="1" 
-                  value={slicesPerPatient} onChange={(e) => setSlicesPerPatient(parseInt(e.target.value))}
-                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                />
+                <select 
+                  value={platform}
+                  onChange={(e) => setPlatform(e.target.value as SpatialPlatform)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm mb-2"
+                >
+                  {Object.values(SpatialPlatform).map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 flex justify-between">
+                   <div>
+                      <span className="block text-[8px] uppercase text-indigo-400 font-black mb-0.5 tracking-tighter">Resolution</span>
+                      <span className="text-[10px] font-bold text-indigo-900">{currentPlatform.resolution}</span>
+                   </div>
+                   <div className="text-right">
+                      <span className="block text-[8px] uppercase text-indigo-400 font-black mb-0.5 tracking-tighter">Cost/Slice</span>
+                      <span className="text-[10px] font-bold text-indigo-900">${currentPlatform.costPerSlice}</span>
+                   </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Platform Settings */}
+          {/* Variance ICC Sidebar Section */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
-              <Layers size={16} className="text-indigo-500" />
-              Assay Selection
-            </h3>
-            <div className="space-y-4">
-              <select 
-                value={platform}
-                onChange={(e) => setPlatform(e.target.value as SpatialPlatform)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-              >
-                {Object.values(SpatialPlatform).map(p => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex justify-between">
-                <div className="text-center">
-                  <span className="block text-[9px] uppercase text-slate-400 font-bold mb-1">Resolution</span>
-                  <span className="text-xs font-bold text-slate-700">{currentPlatform.resolution}</span>
+             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+                <Sigma size={14} className="text-pink-500" />
+                Variance Decomposition
+             </h3>
+             <div className="space-y-5">
+                <div>
+                   <div className="flex justify-between text-[10px] text-slate-500 mb-1.5 font-bold uppercase tracking-tighter">
+                      <span>Patient Heterogeneity (σP)</span>
+                      <span className="text-indigo-600">{patientVariance.toFixed(1)}</span>
+                   </div>
+                   <input type="range" min="0.1" max="1" step="0.1" value={patientVariance} onChange={(e)=>setPatientVariance(parseFloat(e.target.value))} className="w-full h-1 accent-indigo-600" />
                 </div>
-                <div className="text-center">
-                  <span className="block text-[9px] uppercase text-slate-400 font-bold mb-1">Cost/Slice</span>
-                  <span className="text-xs font-bold text-slate-700">${currentPlatform.costPerSlice}</span>
+                <div>
+                   <div className="flex justify-between text-[10px] text-slate-500 mb-1.5 font-bold uppercase tracking-tighter">
+                      <span>Slice Variability (σS)</span>
+                      <span className="text-pink-600">{sliceVariance.toFixed(2)}</span>
+                   </div>
+                   <input type="range" min="0" max="0.5" step="0.05" value={sliceVariance} onChange={(e)=>setSliceVariance(parseFloat(e.target.value))} className="w-full h-1 accent-pink-600" />
                 </div>
-              </div>
-            </div>
+             </div>
+             <div className="mt-6">
+                <div className="h-16 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart layout="vertical" data={calculationResults.varData} margin={{ left: -15, right: 10 }}>
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" hide />
+                      <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{fontSize: '10px'}} />
+                      <Bar dataKey="value" stackId="a">
+                        {calculationResults.varData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex justify-between text-[8px] font-bold text-slate-400 mt-2 px-1">
+                  <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-indigo-500"></div> PATIENT</span>
+                  <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-pink-500"></div> SLICE</span>
+                  <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-slate-400"></div> TECH</span>
+                </div>
+             </div>
           </div>
 
-          {/* Variance Decomposition */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-4 text-center">Variance Decomposition (Adjusted T={numTimepoints})</h4>
-            <div className="h-16 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart layout="vertical" data={calculationResults.varData} margin={{ left: 10, right: 10 }}>
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" hide />
-                  <Tooltip cursor={{ fill: 'transparent' }} />
-                  <Bar dataKey="value" stackId="a">
-                    {calculationResults.varData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-between text-[8px] font-bold text-slate-400 mt-2 px-1">
-              <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-indigo-500"></div> PATIENT</span>
-              <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-pink-500"></div> SLICE</span>
-              <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-slate-400"></div> TECH</span>
-            </div>
+          {/* Methodology Card (Moved from Footer) */}
+          <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 text-white relative overflow-hidden shadow-lg">
+             <div className="absolute -top-4 -right-4 p-4 opacity-5">
+                <Database size={120} />
+             </div>
+             <div className="relative z-10 space-y-4">
+                <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs font-mono tracking-widest uppercase">
+                   <Sigma size={16} />
+                   PoweREST Framework
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
+                  Implements **hierarchical power planning** for Spatial Transcriptomics. Data is modeled as a nested structure: **Subject > Slice > Technical Replicate**. 
+                  Longitudinal gain is derived using a Linear Mixed-Effects (LME) approximation.
+                </p>
+                <div className="space-y-2 pt-2">
+                   <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                      <ChevronRight size={12} className="text-indigo-500" />
+                      LMM Modeling
+                   </div>
+                   <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                      <ChevronRight size={12} className="text-indigo-500" />
+                      Hierarchical ICC
+                   </div>
+                   <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                      <ChevronRight size={12} className="text-indigo-500" />
+                      Temporal Auto-correlation
+                   </div>
+                </div>
+             </div>
           </div>
         </div>
 
-        {/* Right Column: Visualizations */}
-        <div className="xl:col-span-8 space-y-6">
+        {/* Right Column: Expanded Visualizations */}
+        <div className="xl:col-span-8 space-y-8">
           
-          {/* Main Visual Row: Power + Animated Mockup */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Top Hero: Results & Dynamics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            {/* 1. Final Study Power */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-              <div>
-                <h3 className="text-slate-800 font-bold mb-1 flex items-center gap-2">
-                  <Zap size={18} className="text-amber-500" />
-                  Estimated Power at Study End
-                </h3>
-                <p className="text-[11px] text-slate-400 mb-6">Based on hierarchical modeling of {numTimepoints} timepoints.</p>
-                <div className="text-7xl font-black text-slate-900 tracking-tight">
-                  {(calculationResults.currentPower * 100).toFixed(0)}%
-                </div>
-              </div>
-              <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
+            {/* 1. Final Study Power Hero */}
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between group">
+              <div className="flex justify-between items-start">
                 <div>
-                  <span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Total Est. Cost</span>
-                  <span className="text-xl font-bold text-emerald-600">${(numPatients * 2 * slicesPerPatient * numTimepoints * currentPlatform.costPerSlice / 1000).toFixed(1)}k</span>
+                  <h3 className="text-slate-900 font-black text-xl mb-1 flex items-center gap-2">
+                    <Zap size={22} className="text-amber-500" />
+                    Projected Power
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium tracking-wide">Calculated for {currentTimepointLabel} primary endpoint.</p>
                 </div>
-                <div className="text-right">
-                  <span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Total Data Slices</span>
-                  <span className="text-xl font-bold text-slate-700">{numPatients * 2 * slicesPerPatient * numTimepoints}</span>
+                <button onClick={() => handleDownload('Summary')} className="p-2 text-slate-300 hover:text-indigo-600 transition-colors">
+                  <Share2 size={18} />
+                </button>
+              </div>
+              
+              <div className="my-8 text-center">
+                 <div className="text-9xl font-black text-slate-950 tracking-tighter inline-block relative">
+                    {(calculationResults.currentPower * 100).toFixed(0)}
+                    <span className="text-4xl text-indigo-500 absolute -top-2 -right-10">%</span>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-8 border-t border-slate-100">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span className="block text-[10px] uppercase text-slate-400 font-black tracking-widest mb-1">Budget Est.</span>
+                  <span className="text-2xl font-black text-emerald-600 tracking-tight">${(numPatients * 2 * slicesPerPatient * numTimepoints * currentPlatform.costPerSlice / 1000).toFixed(1)}k</span>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span className="block text-[10px] uppercase text-slate-400 font-black tracking-widest mb-1">Total Slices</span>
+                  <span className="text-2xl font-black text-slate-800 tracking-tight">{numPatients * 2 * slicesPerPatient * numTimepoints}</span>
                 </div>
               </div>
             </div>
 
-            {/* 2. Interactive Tissue Remodeling */}
-            <div className="bg-slate-950 rounded-2xl p-6 relative border border-slate-800 shadow-2xl flex flex-col">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <Maximize2 size={14} /> Tissue Dynamics Simulation
+            {/* 2. Expanded Tissue Dynamics Simulation */}
+            <div className="bg-slate-950 rounded-2xl p-8 relative border border-slate-800 shadow-2xl flex flex-col overflow-hidden min-h-[450px]">
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Maximize2 size={16} /> Tissue Dynamics In-Silico
                 </h4>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button 
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className="p-1.5 rounded-full bg-slate-800 text-slate-300 hover:text-white transition-colors"
+                    className="p-2 rounded-full bg-slate-800 text-slate-300 hover:text-white transition-all transform active:scale-95"
                   >
-                    {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+                    {isPlaying ? <Pause size={18} /> : <Play size={18} className="translate-x-0.5" />}
                   </button>
-                  <div className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-mono border border-indigo-500/30">
+                  <div className="px-3 py-1 rounded bg-indigo-500/10 text-indigo-400 text-xs font-black border border-indigo-500/20">
                     {TIMEPOINTS_MAP.find(t => t.count === visualTimepoint)?.label}
                   </div>
                 </div>
               </div>
               
-              <div className="flex-grow h-44 relative border border-slate-800 rounded-lg overflow-hidden bg-slate-900/40">
+              <div className="flex-grow relative border border-slate-800/50 rounded-xl overflow-hidden bg-slate-900/40 shadow-inner">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                     <XAxis type="number" dataKey="x" hide domain={[0, 100]} />
                     <YAxis type="number" dataKey="y" hide domain={[0, 100]} />
-                    <ZAxis type="number" range={[18, 18]} />
+                    <ZAxis type="number" range={[25, 25]} />
                     <Scatter name="Cells" data={tissueDots}>
                       {tissueDots.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.8} />
                       ))}
                     </Scatter>
                   </ScatterChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="mt-4">
+              <div className="mt-8">
                 <input 
                   type="range" min="1" max={numTimepoints} step="1"
                   value={visualTimepoint}
                   onChange={(e) => setVisualTimepoint(parseInt(e.target.value))}
-                  className="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-indigo-500"
+                  className="w-full h-1.5 bg-slate-800 rounded appearance-none cursor-pointer accent-indigo-500"
                 />
-                <div className="flex justify-between text-[8px] text-slate-500 mt-2 font-mono uppercase tracking-tighter">
+                <div className="flex justify-between text-[9px] text-slate-500 mt-3 font-black uppercase tracking-widest">
                   {TIMEPOINTS_MAP.slice(0, numTimepoints).map(tp => (
-                    <span key={tp.count}>{tp.label}</span>
+                    <span key={tp.count} className={visualTimepoint === tp.count ? 'text-indigo-400' : ''}>{tp.label}</span>
                   ))}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Analysis Charts (Sensitivity) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Analysis Charts (Expanded Vertical Space) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
             {/* Interim Sensitivity Curve */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-              <div className="flex justify-between items-start mb-8">
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
+              <div className="flex justify-between items-start mb-10">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <TrendingUp size={16} className="text-indigo-500" />
-                    Power Sensitivity Curve
+                  <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
+                    <TrendingUp size={20} className="text-indigo-600" />
+                    Sensitivity Curve
                   </h4>
-                  <p className="text-[10px] text-slate-400">Analysis scope bounded by duration.</p>
+                  <p className="text-[11px] text-slate-400 font-medium">Power as a function of sample size (N).</p>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Select Interim</span>
-                  <select 
-                    value={analysisTimepoint}
-                    onChange={(e) => setAnalysisTimepoint(parseInt(e.target.value))}
-                    className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100 outline-none"
-                  >
-                    {TIMEPOINTS_MAP.slice(0, numTimepoints).map(t => (
-                      <option key={t.count} value={t.count}>{t.label} Analysis</option>
-                    ))}
-                  </select>
+                <div className="flex items-center gap-3">
+                   <div className="flex flex-col items-end">
+                      <select 
+                        value={analysisTimepoint}
+                        onChange={(e) => setAnalysisTimepoint(parseInt(e.target.value))}
+                        className="text-[12px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 outline-none cursor-pointer hover:bg-indigo-100 transition-colors"
+                      >
+                        {TIMEPOINTS_MAP.slice(0, numTimepoints).map(t => (
+                          <option key={t.count} value={t.count}>{t.label} Analysis</option>
+                        ))}
+                      </select>
+                   </div>
+                   <button onClick={() => handleDownload('Sensitivity Curve')} className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
+                      <Download size={20} />
+                   </button>
                 </div>
               </div>
               
-              <div className="h-64">
+              <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={calculationResults.powerCurve} margin={{ top: 10, right: 30, left: 20, bottom: 40 }}>
+                  <AreaChart data={calculationResults.powerCurve} margin={{ top: 10, right: 30, left: 0, bottom: 40 }}>
                     <defs>
                       <linearGradient id="curveGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
                         <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="n" stroke="#94a3b8" fontSize={10} label={{ value: 'N (Per Arm)', position: 'insideBottom', offset: -25, fill: '#94a3b8', fontSize: 10 }} />
-                    <YAxis domain={[0, 100]} stroke="#94a3b8" fontSize={10} label={{ value: 'Power %', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 10 }} />
-                    <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '11px' }} />
-                    <ReferenceLine y={80} stroke="#10b981" strokeDasharray="3 3" />
-                    <ReferenceLine x={numPatients} stroke="#6366f1" strokeDasharray="2 2" />
-                    <Area type="monotone" dataKey="power" stroke="#6366f1" strokeWidth={2} fill="url(#curveGrad)" />
+                    <XAxis dataKey="n" stroke="#94a3b8" fontSize={11} fontWeight="bold" label={{ value: 'Cohort Size (N) per Arm', position: 'insideBottom', offset: -25, fill: '#64748b', fontSize: 11, fontWeight: 'bold' }} />
+                    <YAxis domain={[0, 100]} stroke="#94a3b8" fontSize={11} fontWeight="bold" label={{ value: 'Statistical Power (%)', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11, fontWeight: 'bold' }} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }} 
+                      formatter={(val: number) => [`${val}%`, 'Power']}
+                      labelFormatter={(n) => `N = ${n}`}
+                    />
+                    <ReferenceLine y={80} stroke="#10b981" strokeDasharray="5 5" strokeWidth={2} label={{ value: "80% Threshold", position: 'insideTopRight', fill: '#10b981', fontSize: 10, fontWeight: 'bold' }} />
+                    <ReferenceLine x={numPatients} stroke="#6366f1" strokeDasharray="3 3" strokeWidth={1.5} />
+                    <Area type="monotone" dataKey="power" stroke="#6366f1" strokeWidth={3} fill="url(#curveGrad)" activeDot={{ r: 6, strokeWidth: 0 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* Cost Pareto Curve */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-               <h4 className="text-sm font-bold text-slate-800 mb-8 flex items-center gap-2">
-                  <DollarSign size={16} className="text-emerald-500" />
-                  Efficiency Frontier (T={analysisTimepoint})
-                </h4>
-                <div className="h-64">
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
+               <div className="flex justify-between items-start mb-10">
+                  <div>
+                    <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
+                      <DollarSign size={20} className="text-emerald-500" />
+                      Efficiency Frontier
+                    </h4>
+                    <p className="text-[11px] text-slate-400 font-medium">N vs. Cost vs. Power optimization.</p>
+                  </div>
+                  <button onClick={() => handleDownload('Efficiency Frontier')} className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
+                    <Download size={20} />
+                  </button>
+               </div>
+                
+                <div className="h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ScatterChart margin={{ top: 10, right: 30, left: 20, bottom: 40 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis type="number" dataKey="cost" stroke="#94a3b8" fontSize={10} label={{ value: 'Total Cost ($k)', position: 'insideBottom', offset: -25, fill: '#94a3b8', fontSize: 10 }} />
-                      <YAxis type="number" dataKey="power" domain={[0, 100]} stroke="#94a3b8" fontSize={10} label={{ value: 'Power %', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 10 }} />
-                      <ZAxis range={[60, 60]} />
-                      <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                      <Scatter name="Designs" data={calculationResults.powerCurve} fill="#6366f1" />
-                      <ReferenceLine y={80} stroke="#10b981" strokeDasharray="3 3" />
+                    <ScatterChart margin={{ top: 10, right: 30, left: 0, bottom: 40 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
+                      <XAxis type="number" dataKey="cost" stroke="#94a3b8" fontSize={11} fontWeight="bold" label={{ value: 'Projected Budget ($k)', position: 'insideBottom', offset: -25, fill: '#64748b', fontSize: 11, fontWeight: 'bold' }} />
+                      <YAxis type="number" dataKey="power" domain={[0, 100]} stroke="#94a3b8" fontSize={11} fontWeight="bold" label={{ value: 'Statistical Power (%)', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11, fontWeight: 'bold' }} />
+                      <ZAxis range={[100, 100]} />
+                      <Tooltip 
+                        cursor={{ strokeDasharray: '3 3' }} 
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                      />
+                      <Scatter name="Design Options" data={calculationResults.powerCurve} fill="#10b981" fillOpacity={0.6}>
+                        {calculationResults.powerCurve.map((entry, index) => (
+                           <Cell key={`cell-${index}`} fill={entry.n === numPatients ? '#6366f1' : '#10b981'} />
+                        ))}
+                      </Scatter>
+                      <ReferenceLine y={80} stroke="#10b981" strokeDasharray="5 5" />
                     </ScatterChart>
                   </ResponsiveContainer>
                 </div>
             </div>
-          </div>
-
-          {/* Methodology Citation Footer */}
-          <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl flex flex-col md:flex-row gap-8 items-start relative">
-             <div className="absolute top-0 right-0 p-4 opacity-10">
-                <Database size={100} />
-             </div>
-             
-             <div className="flex-1 space-y-4 relative z-10">
-                <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs font-mono tracking-tighter uppercase">
-                   <Sigma size={16} />
-                   PoweREST Framework Integration
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed max-w-xl">
-                  This calculator implements the **hierarchical power planning** principles popularized by the **PoweREST** methodology. 
-                  It models spatial transcriptomics data as a nested structure: **Subject > Slice > Technical Replicate**. 
-                  Longitudinal gain is derived using a Linear Mixed-Effects (LME) approximation where temporal autocorrelation and 
-                  intra-class correlation (ICC) across repeated tissue sections are used to refine the Standard Error (SE) of the treatment effect.
-                </p>
-                <div className="flex flex-wrap gap-4 pt-2">
-                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                      <ChevronRight size={12} className="text-indigo-500" />
-                      Longitudinal LMM Modeling
-                   </div>
-                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                      <ChevronRight size={12} className="text-indigo-500" />
-                      Hierarchical Variance Components
-                   </div>
-                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                      <ChevronRight size={12} className="text-indigo-500" />
-                      In Silico Tissue Remodeling
-                   </div>
-                </div>
-             </div>
-
-             <div className="w-full md:w-64 space-y-3 bg-white p-4 rounded-lg border border-slate-200 shadow-sm shrink-0">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 mb-2">
-                   <Sigma size={14} /> Variance ICC
-                </h4>
-                <div className="space-y-3">
-                   <div>
-                      <div className="flex justify-between text-[10px] text-slate-500 mb-1 font-bold">
-                        <span>Patient (σP)</span>
-                        <span>{patientVariance.toFixed(1)}</span>
-                      </div>
-                      <input type="range" min="0.1" max="1" step="0.1" value={patientVariance} onChange={(e)=>setPatientVariance(parseFloat(e.target.value))} className="w-full h-1 accent-indigo-500" />
-                   </div>
-                   <div>
-                      <div className="flex justify-between text-[10px] text-slate-500 mb-1 font-bold">
-                        <span>Slice (σS)</span>
-                        <span>{sliceVariance.toFixed(2)}</span>
-                      </div>
-                      <input type="range" min="0" max="0.5" step="0.05" value={sliceVariance} onChange={(e)=>setSliceVariance(parseFloat(e.target.value))} className="w-full h-1 accent-pink-500" />
-                   </div>
-                </div>
-             </div>
           </div>
 
         </div>

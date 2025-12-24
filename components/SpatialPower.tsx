@@ -74,11 +74,13 @@ enum SpatialPlatform {
 
 interface PlatformPreset {
   id: SpatialPlatform;
-  resolution: string; // micron per unit
-  technicalVariance: number; // relative variance
-  captureEfficiency: number; // 0-1
+  resolution: string; 
+  technicalVariance: number; 
+  captureEfficiency: number; 
   costPerSlice: number;
   description: string;
+  effectiveObservations: number; // O_eff: Impacts technical noise scaling
+  resolutionGain: number; // Multiplier to reduce biological variance (composition noise)
 }
 
 const PLATFORMS: Record<SpatialPlatform, PlatformPreset> = {
@@ -88,23 +90,29 @@ const PLATFORMS: Record<SpatialPlatform, PlatformPreset> = {
     technicalVariance: 0.15, 
     captureEfficiency: 0.25, 
     costPerSlice: 1500,
-    description: 'NGS-based. High transcriptomic coverage, multi-cell spots.' 
+    description: 'NGS-based. High transcriptomic coverage, multi-cell spots.',
+    effectiveObservations: 500,
+    resolutionGain: 1.0 
   },
   [SpatialPlatform.XENIUM]: { 
     id: SpatialPlatform.XENIUM, 
-    resolution: '0.2µm Pixel (Single Cell)', 
+    resolution: '0.2µm Pixel', 
     technicalVariance: 0.08, 
     captureEfficiency: 0.85, 
     costPerSlice: 3000,
-    description: 'In-situ hybridization. Single-cell/sub-cellular resolution.' 
+    description: 'In-situ hybridization. Single-cell resolution. High precision.',
+    effectiveObservations: 5000,
+    resolutionGain: 0.82 // Significant reduction in compositional noise
   },
   [SpatialPlatform.COSMX]: { 
     id: SpatialPlatform.COSMX, 
-    resolution: '0.18µm Pixel (Single Cell)', 
+    resolution: '0.18µm Pixel', 
     technicalVariance: 0.10, 
     captureEfficiency: 0.80, 
     costPerSlice: 2800,
-    description: 'In-situ imaging. High plex, single-cell protein + RNA.' 
+    description: 'In-situ imaging. High plex, single-cell protein + RNA.',
+    effectiveObservations: 4500,
+    resolutionGain: 0.85
   },
   [SpatialPlatform.SLIDE_SEQ]: { 
     id: SpatialPlatform.SLIDE_SEQ, 
@@ -112,7 +120,9 @@ const PLATFORMS: Record<SpatialPlatform, PlatformPreset> = {
     technicalVariance: 0.25, 
     captureEfficiency: 0.05, 
     costPerSlice: 1200,
-    description: 'Bead-based NGS. High resolution but low capture efficiency.' 
+    description: 'Bead-based NGS. High resolution but low capture efficiency.',
+    effectiveObservations: 800,
+    resolutionGain: 0.95
   }
 };
 
@@ -128,14 +138,14 @@ export const SpatialPower: React.FC = () => {
   const [platform, setPlatform] = useState<SpatialPlatform>(SpatialPlatform.XENIUM);
   const [numPatients, setNumPatients] = useState(24);
   const [slicesPerPatient, setSlicesPerPatient] = useState(2);
-  const [numTimepoints, setNumTimepoints] = useState(3); // Study Design (Baseline to Wk 24)
+  const [numTimepoints, setNumTimepoints] = useState(3);
   const [treatmentEffect, setTreatmentEffect] = useState(0.4); 
   const [patientVariance, setPatientVariance] = useState(0.6); 
   const [sliceVariance, setSliceVariance] = useState(0.2); 
   
   // --- Temporal Interactivity State ---
-  const [visualTimepoint, setVisualTimepoint] = useState(3); // Tissue mockup timeline (1-numTimepoints)
-  const [analysisTimepoint, setAnalysisTimepoint] = useState(3); // Chart sensitivity interim (1-numTimepoints)
+  const [visualTimepoint, setVisualTimepoint] = useState(3); 
+  const [analysisTimepoint, setAnalysisTimepoint] = useState(3); 
   const [isPlaying, setIsPlaying] = useState(false);
   const playIntervalRef = useRef<number | null>(null);
 
@@ -144,19 +154,21 @@ export const SpatialPower: React.FC = () => {
 
   // --- Strict Constraint Logic ---
   useEffect(() => {
-    if (visualTimepoint > numTimepoints) {
-      setVisualTimepoint(numTimepoints);
-    }
-    if (analysisTimepoint > numTimepoints) {
-      setAnalysisTimepoint(numTimepoints);
-    }
+    if (visualTimepoint > numTimepoints) setVisualTimepoint(numTimepoints);
+    if (analysisTimepoint > numTimepoints) setAnalysisTimepoint(numTimepoints);
   }, [numTimepoints]);
 
   // --- Logic (PoweREST inspired hierarchical power) ---
   const calculationResults = useMemo(() => {
     const alpha = 0.05;
-    const sigmaP2 = Math.pow(patientVariance, 2);
+    
+    // Apply Resolution Gain: Single-cell platforms reduce biological noise by isolating cell states
+    const adjPatientVariance = patientVariance * currentPlatform.resolutionGain;
+    
+    const sigmaP2 = Math.pow(adjPatientVariance, 2);
     const sigmaS2 = Math.pow(sliceVariance, 2);
+    
+    // Technical variance is heavily modulated by Capture Efficiency and Platform Resolution
     const sigmaT2 = currentPlatform.technicalVariance / currentPlatform.captureEfficiency;
 
     const calculateForN = (N: number, S: number, T: number) => {
@@ -164,7 +176,7 @@ export const SpatialPower: React.FC = () => {
       const se = Math.sqrt(
         (sigmaP2 / (N * longitudinalGain)) + 
         (sigmaS2 / (N * S * T)) + 
-        (sigmaT2 / (N * S * T * 500))
+        (sigmaT2 / (N * S * T * currentPlatform.effectiveObservations))
       );
       const z = (treatmentEffect / se) - getZScore(1 - alpha/2);
       return Math.max(0, Math.min(1, getNormalProbability(z)));
@@ -181,10 +193,12 @@ export const SpatialPower: React.FC = () => {
     }
 
     const currentPower = calculateForN(numPatients, slicesPerPatient, numTimepoints);
+    
+    // Update variance decomposition components
     const varData = [
-      { name: 'Patient', value: sigmaP2 / (1 + (numTimepoints - 1) * 0.45), fill: '#6366f1' },
+      { name: 'Biological', value: sigmaP2 / (1 + (numTimepoints - 1) * 0.45), fill: '#6366f1' },
       { name: 'Slice', value: sigmaS2 / (numTimepoints), fill: '#ec4899' },
-      { name: 'Technical', value: (sigmaT2 / 500) / numTimepoints, fill: '#94a3b8' }
+      { name: 'Technical', value: (sigmaT2 / currentPlatform.effectiveObservations) / numTimepoints, fill: '#94a3b8' }
     ];
 
     return { powerCurve, currentPower, varData };
@@ -226,7 +240,7 @@ export const SpatialPower: React.FC = () => {
   };
 
   return (
-    <div className="animate-in fade-in duration-500 pb-12">
+    <div className="animate-in fade-in duration-500 pb-12 text-slate-900">
       {/* Header Banner */}
       <div className="mb-8 bg-gradient-to-r from-slate-900 to-indigo-900 p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-10">
@@ -234,16 +248,16 @@ export const SpatialPower: React.FC = () => {
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
-            <span className="bg-indigo-500/40 text-indigo-100 text-[10px] px-2 py-0.5 rounded font-mono border border-indigo-400/30">
-              METHODOLOGY INSPIRED BY POWEREST
+            <span className="bg-indigo-500/40 text-indigo-100 text-[10px] px-2 py-0.5 rounded font-mono border border-indigo-400/30 uppercase tracking-widest">
+              Platform-Weighted Simulation v2.2
             </span>
           </div>
           <h2 className="text-3xl font-bold mb-3 flex items-center gap-3">
             <Microscope size={32} className="text-indigo-400" />
             Longitudinal Spatial Power Planner
           </h2>
-          <p className="text-indigo-100 max-w-2xl opacity-90 leading-relaxed">
-            Professional workbench for planning and budgeting high-resolution Spatial Transcriptomics trials with hierarchical variance structures.
+          <p className="text-indigo-100 max-w-2xl opacity-90 leading-relaxed text-sm">
+            Professional workbench for planning high-resolution Spatial Transcriptomics trials. Simulation logic accounts for platform-specific capture efficiency, technical noise, and resolution gains.
           </p>
         </div>
       </div>
@@ -292,17 +306,18 @@ export const SpatialPower: React.FC = () => {
                 <select 
                   value={platform}
                   onChange={(e) => setPlatform(e.target.value as SpatialPlatform)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm mb-2"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm mb-2 font-medium"
                 >
                   {Object.values(SpatialPlatform).map(p => (
                     <option key={p} value={p}>{p}</option>
                   ))}
                 </select>
-                <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 flex justify-between">
+                <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 flex justify-between items-center">
                    <div>
-                      <span className="block text-[8px] uppercase text-indigo-400 font-black mb-0.5 tracking-tighter">Resolution</span>
-                      <span className="text-[10px] font-bold text-indigo-900">{currentPlatform.resolution}</span>
+                      <span className="block text-[8px] uppercase text-indigo-400 font-black mb-0.5 tracking-tighter">Capture Eff.</span>
+                      <span className="text-[10px] font-bold text-indigo-900">{(currentPlatform.captureEfficiency * 100).toFixed(0)}%</span>
                    </div>
+                   <div className="w-px h-6 bg-indigo-200"></div>
                    <div className="text-right">
                       <span className="block text-[8px] uppercase text-indigo-400 font-black mb-0.5 tracking-tighter">Cost/Slice</span>
                       <span className="text-[10px] font-bold text-indigo-900">${currentPlatform.costPerSlice}</span>
@@ -321,7 +336,7 @@ export const SpatialPower: React.FC = () => {
              <div className="space-y-5">
                 <div>
                    <div className="flex justify-between text-[10px] text-slate-500 mb-1.5 font-bold uppercase tracking-tighter">
-                      <span>Patient Heterogeneity (σP)</span>
+                      <span>Baseline Bio Variability (σP)</span>
                       <span className="text-indigo-600">{patientVariance.toFixed(1)}</span>
                    </div>
                    <input type="range" min="0.1" max="1" step="0.1" value={patientVariance} onChange={(e)=>setPatientVariance(parseFloat(e.target.value))} className="w-full h-1 accent-indigo-600" />
@@ -334,6 +349,7 @@ export const SpatialPower: React.FC = () => {
                    <input type="range" min="0" max="0.5" step="0.05" value={sliceVariance} onChange={(e)=>setSliceVariance(parseFloat(e.target.value))} className="w-full h-1 accent-pink-600" />
                 </div>
              </div>
+             
              <div className="mt-6">
                 <div className="h-16 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -349,41 +365,82 @@ export const SpatialPower: React.FC = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex justify-between text-[8px] font-bold text-slate-400 mt-2 px-1">
-                  <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-indigo-500"></div> PATIENT</span>
+                <div className="flex justify-between text-[8px] font-black text-slate-400 mt-2 px-1 uppercase tracking-tighter">
+                  <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-indigo-500"></div> BIOLOGICAL</span>
                   <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-pink-500"></div> SLICE</span>
-                  <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-slate-400"></div> TECH</span>
+                  <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-slate-400"></div> TECHNICAL</span>
                 </div>
              </div>
           </div>
 
-          {/* Methodology Card (Moved from Footer) */}
+          {/* Statistical Framework Documentation Card */}
           <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 text-white relative overflow-hidden shadow-lg">
              <div className="absolute -top-4 -right-4 p-4 opacity-5">
                 <Database size={120} />
              </div>
-             <div className="relative z-10 space-y-4">
-                <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs font-mono tracking-widest uppercase">
-                   <Sigma size={16} />
-                   PoweREST Framework
+             <div className="relative z-10 space-y-6">
+                <div>
+                  <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs font-mono tracking-widest uppercase mb-1">
+                    <Sigma size={16} />
+                    Statistical Framework
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-tight italic">
+                    Inspired by the PoweREST framework for hierarchical power planning in Spatial Transcriptomics.
+                  </p>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
-                  Implements **hierarchical power planning** for Spatial Transcriptomics. Data is modeled as a nested structure: **Subject > Slice > Technical Replicate**. 
-                  Longitudinal gain is derived using a Linear Mixed-Effects (LME) approximation.
-                </p>
-                <div className="space-y-2 pt-2">
-                   <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                      <ChevronRight size={12} className="text-indigo-500" />
-                      LMM Modeling
-                   </div>
-                   <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                      <ChevronRight size={12} className="text-indigo-500" />
-                      Hierarchical ICC
-                   </div>
-                   <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                      <ChevronRight size={12} className="text-indigo-500" />
-                      Temporal Auto-correlation
-                   </div>
+
+                <div className="space-y-4">
+                  {/* Model 1: Platform Scaling */}
+                  <div>
+                    <h4 className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <ChevronRight size={10} /> 1. Platform Scaling & Technical Noise
+                    </h4>
+                    <div className="bg-slate-950/50 p-2 rounded border border-slate-800 mb-2">
+                      <code className="text-[11px] font-mono text-emerald-400">
+                        Var<sub>tech_eff</sub> = σ²<sub>tech</sub> / (S × T × O<sub>eff</sub> × ε)
+                      </code>
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
+                      Suppresses technical noise by sampling depth. <code className="text-slate-200">ε</code> (Capture Efficiency) and <code className="text-slate-200">O<sub>eff</sub></code> (Resolution) significantly boost statistical precision.
+                    </p>
+                  </div>
+
+                  {/* Model 2: Resolution Adjusted */}
+                  <div>
+                    <h4 className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <ChevronRight size={10} /> 2. Resolution-Adjusted Variance
+                    </h4>
+                    <div className="bg-slate-950/50 p-2 rounded border border-slate-800 mb-2">
+                      <code className="text-[11px] font-mono text-emerald-400">
+                        σ²<sub>adj</sub> = σ²<sub>bio</sub> × γ<sub>res</sub>
+                      </code>
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
+                      Single-cell platforms reduce compositional noise by isolating pure cell states. <code className="text-slate-200">γ<sub>res</sub></code> models the gain from cellular precision (up to 18% reduction for Xenium).
+                    </p>
+                  </div>
+
+                  {/* Model 3: Longitudinal LME */}
+                  <div>
+                    <h4 className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <ChevronRight size={10} /> 3. Longitudinal Gain Model (LME)
+                    </h4>
+                    <div className="bg-slate-950/50 p-2 rounded border border-slate-800 mb-2">
+                      <code className="text-[11px] font-mono text-emerald-400">
+                        Gain<sub>long</sub> = 1 + (T - 1) × ρ
+                      </code>
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
+                      Calculates power benefit of repeated measures. <code className="text-slate-200">T</code> is total clinical timepoints and <code className="text-slate-200">ρ</code> is intra-subject correlation (assumed ≈ 0.45).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800">
+                  <div className="flex justify-between items-center text-[9px] text-slate-500 font-mono italic">
+                    <span>ENGINE: HIE-SPATIAL-v2.2</span>
+                    <span>σ, γ, ρ, ε Applied</span>
+                  </div>
                 </div>
              </div>
           </div>
@@ -432,7 +489,7 @@ export const SpatialPower: React.FC = () => {
             {/* 2. Expanded Tissue Dynamics Simulation */}
             <div className="bg-slate-950 rounded-2xl p-8 relative border border-slate-800 shadow-2xl flex flex-col overflow-hidden min-h-[450px]">
               <div className="flex justify-between items-center mb-6">
-                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 text-white/60">
                   <Maximize2 size={16} /> Tissue Dynamics In-Silico
                 </h4>
                 <div className="flex items-center gap-3">

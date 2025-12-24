@@ -46,18 +46,6 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
             <div className="flex gap-4 group">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-indigo-100">
-                <Map size={24} />
-              </div>
-              <div>
-                <h4 className="font-semibold text-slate-900 text-lg">Spatial Power (PoweREST)</h4>
-                <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                  Plan longitudinal ST trials with hierarchical variance modeling. Includes interactive tissue Dynamics and sensitivity analysis.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 group">
               <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-blue-100">
                 <Database size={24} />
               </div>
@@ -113,6 +101,18 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                 <h4 className="font-semibold text-slate-900 text-lg">Custom Biomarkers</h4>
                 <p className="text-sm text-slate-500 mt-1 leading-relaxed">
                   Dynamically add endpoints with specific units, directionality, and baseline targets to suit your specific study needs.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 group">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-indigo-100">
+                <Map size={24} />
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-900 text-lg">Spatial Power (PoweREST)</h4>
+                <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                  Plan longitudinal ST trials with hierarchical variance modeling. Includes interactive tissue Dynamics and sensitivity analysis.
                 </p>
               </div>
             </div>

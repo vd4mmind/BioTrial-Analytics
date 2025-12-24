@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   generateSimulatedData, 
@@ -37,7 +38,8 @@ import {
   MessageSquare,
   Shield,
   Dna,
-  Map
+  Map,
+  ArrowRight
 } from 'lucide-react';
 
 type AppTab = 'dashboard' | 'power' | 'singlecell' | 'spatial';
@@ -148,7 +150,14 @@ const Header: React.FC<{
         const processedData = calculateDerivedMetrics(rawData);
         onUpload(processedData);
         analytics.logEvent('DATA_UPLOAD', { fileName, patientCount: processedData.length });
-        alert(`Successfully uploaded records for ${processedData.length} patients.`);
+        
+        if (activeTab !== 'dashboard') {
+          if (confirm(`Successfully processed ${processedData.length} records. Would you like to switch to the Dashboard to view your uploaded biomarker trends?`)) {
+            setActiveTab('dashboard');
+          }
+        } else {
+          alert(`Successfully uploaded records for ${processedData.length} patients.`);
+        }
       } catch (err) {
         alert(`Upload Failed: ${err instanceof Error ? err.message : 'Unknown error parsing file.'}`);
       }
@@ -156,6 +165,8 @@ const Header: React.FC<{
     reader.readAsText(file);
     event.target.value = '';
   };
+
+  const isDashboard = activeTab === 'dashboard';
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4">
@@ -211,9 +222,13 @@ const Header: React.FC<{
 
         <div className="flex items-center gap-3">
           <div className="relative flex items-center group">
-            <label className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors shadow-md">
+            <label className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg cursor-pointer transition-all shadow-md ${
+              isDashboard 
+                ? 'text-white bg-slate-900 hover:bg-slate-800' 
+                : 'text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 opacity-60 grayscale hover:grayscale-0 hover:opacity-100'
+            }`}>
               <Upload size={16} />
-              <span className="hidden lg:inline">Upload Data</span>
+              <span className="hidden lg:inline">{isDashboard ? 'Upload Data' : 'Upload to Dashboard'}</span>
               <span className="lg:hidden">Upload</span>
               <input type="file" className="hidden" accept=".csv,.json" onChange={handleFileChange} />
             </label>
@@ -227,6 +242,16 @@ const Header: React.FC<{
             </button>
             <div className={`absolute top-full right-0 mt-4 w-96 bg-white p-5 rounded-xl shadow-2xl border border-slate-200 text-slate-600 z-50 transition-all duration-200 transform origin-top-right ${showInfo ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}`}>
               <div className="absolute -top-2 right-4 w-4 h-4 bg-white border-t border-l border-slate-200 transform rotate-45"></div>
+              
+              <div className="mb-4 pb-3 border-b border-slate-100">
+                <h4 className="font-bold text-slate-800 mb-1 text-sm flex items-center gap-2">
+                  <LayoutDashboard size={16} className="text-indigo-600" /> Dashboard Only Action
+                </h4>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Data upload is for visualizing <strong>biomarker trends</strong> in the Dashboard. Power modules are driven by manual parameter simulation.
+                </p>
+              </div>
+
               <h4 className="font-bold text-slate-800 mb-3 text-sm flex items-center gap-2">
                 <Code size={16} className="text-indigo-600" /> Supported Data Formats
               </h4>

@@ -1,4 +1,3 @@
-
 <div align="center">
   <img src="./logo.svg" alt="BioTrial Analytics Logo" width="120" />
   <br />
@@ -15,117 +14,59 @@
 
 ### 1. **Simulated Cohorts (Data Dashboard)**
    - Instantly generate realistic Phase IIb clinical trial data for **N=600 patients**.
-   - **Configurable Scenarios**:
-     - **Standard Efficacy**: Clear separation between drug and placebo.
-     - **Mixed Results**: Simulates subpopulations where the drug fails.
-     - **Failed Trial**: No statistical difference between arms.
-     - **High Placebo**: Strong placebo response masking drug effect.
+   - **Configurable Scenarios**: Standard Efficacy, Mixed Results, Failed Trial, and High Placebo.
    - Comparison across three arms: **Placebo**, **Drug X 1mg**, and **Drug X 2mg**.
 
-### 2. **Advanced Analytics & Visualization**
-   - **Trend Charts**: Longitudinal line charts showing Mean ± SEM over 24 weeks (supports Log Scale).
-   - **Distribution Plots**: Scatter plots to visualize patient-level variability.
-   - **Efficacy Heatmaps**: At-a-glance view of % change across all biomarkers.
-   - **AUC Analysis**: Automatic calculation of **Area Under the Curve** using the trapezoidal rule to quantify sustained treatment effects.
+### 2. **Longitudinal Spatial Power Planning (PoweREST)**
+   - **Methodology**: Implements the **PoweREST** hierarchical framework for Spatial Transcriptomics (ST).
+   - **Hierarchical Variance**: Models variance decomposition across Subjects, Slices, and Technical replicates.
+   - **Tissue Dynamics**: Interactive simulation of tissue remodeling (e.g., immune infiltration) across 4 clinical timepoints.
+   - **Sensitivity Analysis**: Calculate power curves for interim analyses, strictly bounded by planned study duration.
+   - **Efficiency Frontier**: Optimize N vs. Cost vs. Power across platforms like Xenium, Visium, and CosMx.
 
-### 3. **Statistical Power Calculator**
-   - A robust statistical engine for planning biomarker studies.
-   - **Supported Platforms**:
-     - **ELISA / Immunoassays** (Low Plex)
-     - **Olink Flex** (Targeted Panel)
-     - **Olink Explore HT** (High-Plex Proteomics)
-     - **SomaScan** (Aptamer-based Proteomics)
-   - **Advanced Logic**:
-     - Accounts for **Biological Variability** (Inter-patient heterogeneity) vs Technical Noise.
-     - Applies **Bonferroni Correction** for high-multiplex assays (e.g., adjusting Alpha for 7000+ analytes).
-     - Interactive **Power Curve** and Variance Breakdown.
+### 3. **Advanced Analytics & Visualization**
+   - **Trend Charts**: Longitudinal Mean ± SEM over 24 weeks with Log Scale support.
+   - **Distribution Plots**: Scatter plots for patient-level variability.
+   - **AUC Analysis**: Automated Area Under the Curve calculation via the trapezoidal rule.
 
-### 4. **Single Cell (scRNA-seq) Power Analysis**
-   - **Longitudinal Design**: Models power for paired designs (e.g., Baseline vs. End of Treatment) using **Pseudobulk Linear Mixed Models (LMM)**.
-   - **Dropout Modeling**: Simulates the loss of rare cell types based on sequencing depth and abundance, calculating an "Effective N".
-   - **Quality Control**: Configurable thresholds for **Resolution** (Genes/Cell), **Yield** (Cells/Sample), and **Cluster Size**.
-   - **Scenario Presets**: Quickly toggle between scenarios like "Deep Sequencing", "High Biological Variation", or "Rare Cell Detection".
+### 4. **Statistical Power Calculator (Proteomics)**
+   - Plan studies for **ELISA, Olink, and SomaScan**.
+   - Accounts for **Biological Variability** vs Technical Noise.
+   - Applies **Bonferroni Correction** for high-multiplex proteomics (up to 7000+ analytes).
 
-### 5. **User Feedback & Tracking**
-   - Built-in **Usage Analytics** to track session time and event interactions.
-   - **Feedback System** allows users to rate the application and submit comments.
-   - **Admin Dashboard** (accessible via footer) to view aggregated stats and logs.
+### 5. **Single Cell (scRNA-seq) Power Analysis**
+   - **Pseudobulk LMM**: Models power for paired designs using pseudobulk aggregation.
+   - **Dropout Modeling**: Simulates rare cell type detection based on sequencing depth and abundance.
 
 ### 6. **Customizable Endpoints**
-   - Add custom biomarkers dynamically.
-   - Define specific units, directionality (Lower vs. Higher is better), and baseline means.
+   - Define custom biomarkers with specific units, directionality, and baseline means.
 
 ---
 
 ## 📖 How to Use
 
-### **Navigating the Dashboard**
-1. **Toggle Views**: Use the top navigation tabs to switch between the **Analytics Dashboard**, **Power Calculator**, and **Single Cell**.
-2. **Simulate Data**: 
-   - Select a scenario (e.g., "Mixed Results") from the dropdown.
-   - Click `Simulate` to regenerate the patient dataset.
-3. **Deep Dive**: 
-   - Select a biomarker from the dropdown (e.g., hs-CRP, HbA1c).
-   - Toggle between **Absolute Values** and **% Change from Baseline**.
-   - Switch between Bar Chart, Table, and **AUC Plot** views.
+### **Spatial Power Planning**
+1. Navigate to the **Spatial (ST)** tab.
+2. Select your **Assay Platform** (e.g., 10x Xenium) to load cost and resolution presets.
+3. Use the **Trial Design** slider to set the planned study duration (Wk 4 to Wk 52).
+4. Observe the **Tissue Dynamics Simulation** to visualize disease remodeling over time.
+5. Adjust the **Interim Analysis** dropdown to see how power is impacted if the study ends early.
 
-### **Using the Power Calculator**
-1. Choose an **Assay Platform** (e.g., SomaScan, Olink Explore). The app automatically presets typical CVs and Analyte counts.
-2. Adjust **Biological CV** (Patient Heterogeneity) to see how it impacts the sample size more than technical noise.
-3. For High-Plex assays, observe how **Multiple Testing Correction** increases the required N.
-4. Use the **"Set as Reference"** feature to compare different study designs side-by-side.
-
-### **Using the Single Cell Planner**
-1. Define your **Biological Hypothesis** (Effect Size, Impacted Genes).
-2. Set **QC Thresholds** (Min Genes/Cell) to see how sequencing depth affects sample retention.
-3. Adjust **Experimental Design** (Patients, Timepoints) to maximize power for rare cell types.
+### **Dashboard Navigation**
+- Use the top navigation tabs to switch between analytics and planning modules.
+- Upload your own data using the **Upload** button (supports .csv and .json).
 
 ---
 
 ## 🛠️ Tech Stack
-
-This application is built using a modern, type-safe, and performance-oriented stack:
-
-- **Frontend Framework**: [React 19](https://react.dev/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Visualization**: [Recharts](https://recharts.org/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Build Tool**: Vite
-
----
-
-## 💻 Local Development
-
-To run this application locally on your machine:
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/biotrial-analytics.git
-   cd biotrial-analytics
-   ```
-
-2. **Install Dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
-
-3. **Start the Development Server**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-4. Open your browser to `http://localhost:5173` (or the port shown in your terminal).
+- **Frontend**: React 19, TypeScript, Tailwind CSS
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Statistics**: Custom normal distribution and hierarchical power engines inspired by the PoweREST framework.
 
 ---
 
 ## 👤 Developer
+**Vivek Das** | *Functional Prototype Development*
 
-**Vivek Das**  
-*Functional Prototype Development*
-
-> *Disclaimer: This application is a functional prototype. All data presented is simulated for demonstration purposes only and should not be used for clinical decision-making.*
+> *Disclaimer: This application is a functional prototype. All data and power estimates are simulated and should not be used for actual clinical decision-making.*

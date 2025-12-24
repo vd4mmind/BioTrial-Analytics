@@ -21,7 +21,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-indigo-400/30 text-[10px] font-bold px-2 py-0.5 rounded border border-indigo-300/30 uppercase tracking-widest">
-                v2.0 Longitudinal Update
+                v2.1 Precision Update
               </span>
             </div>
             <h2 className="text-3xl font-bold mb-2 tracking-tight text-white">BioTrial Analytics</h2>
@@ -112,7 +112,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
               <div>
                 <h4 className="font-semibold text-slate-900 text-lg">Spatial Power (PoweREST)</h4>
                 <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                  Plan longitudinal ST trials with hierarchical variance modeling. Includes interactive tissue Dynamics and sensitivity analysis.
+                  Plan longitudinal ST trials with hierarchical modeling. Now features strict design-to-analysis synchronization for precision budgeting.
                 </p>
               </div>
             </div>

@@ -4,7 +4,7 @@
   <br />
   <h1>BioTrial Analytics</h1>
   <p>
-    <b>A clinical trial visualization dashboard for analyzing biomarker trends across study arms.</b>
+    <b>A professional clinical trial visualization dashboard for analyzing biomarker trends across study arms.</b>
   </p>
 </div>
 
@@ -34,12 +34,37 @@
 ### 5. **Customizable Endpoints**
    - Define custom biomarkers with specific units, directionality, and baseline means.
 
-### 6. **Longitudinal Spatial Power Planning (PoweREST)**
+### 6. **Longitudinal Spatial Power Planning (PoweREST) — [LATEST UPDATE]**
    - **Methodology**: Implements the **PoweREST** hierarchical framework for Spatial Transcriptomics (ST).
+   - **Strict Design Sync**: Visual simulation and sensitivity curves are strictly bounded by the planned study duration ($T$).
    - **Hierarchical Variance**: Models variance decomposition across Subjects, Slices, and Technical replicates.
    - **Tissue Dynamics**: Interactive simulation of tissue remodeling (e.g., immune infiltration) across clinical timepoints.
-   - **Sensitivity Analysis**: Calculate power curves for interim analyses, strictly bounded by planned study duration.
    - **Efficiency Frontier**: Optimize N vs. Cost vs. Power across platforms like Xenium, Visium, and CosMx.
+
+---
+
+## 💻 Local Development
+
+Follow these steps to run the application on your local machine:
+
+### **1. Prerequisites**
+- Install [Node.js](https://nodejs.org/) (version 18.0 or higher recommended).
+- A modern web browser with ESM support.
+
+### **2. Installation**
+Clone the repository or download the source files, then navigate to the project root and install the necessary dependencies:
+```bash
+npm install
+```
+
+### **3. Running the App**
+Start the local development server:
+```bash
+npm run dev
+# or
+npm start
+```
+The application will typically be available at `http://localhost:5173` (depending on your environment).
 
 ---
 
@@ -49,12 +74,13 @@
 - Use the top navigation tabs to switch between analytics and planning modules.
 - Upload your own data using the **Upload** button (supports .csv and .json).
 
-### **Spatial Power Planning (Latest Update)**
+### **Spatial Power Planning**
 1. Navigate to the **Spatial (ST)** tab.
 2. Select your **Assay Platform** (e.g., 10x Xenium) to load cost and resolution presets.
 3. Use the **Trial Design** slider to set the planned study duration (Wk 4 to Wk 52).
-4. Observe the **Tissue Dynamics Simulation** to visualize disease remodeling over time.
-5. Adjust the **Interim Analysis** dropdown to see how power is impacted if the study ends early.
+4. **Design Constraint**: Note that the "Interim Analysis" and "Tissue Simulation" are automatically restricted to the duration you select.
+5. Observe the **Tissue Dynamics Simulation** to visualize disease remodeling over time.
+6. Adjust the **Interim Analysis** dropdown to see how power is impacted if the study ends at an earlier timepoint.
 
 ---
 

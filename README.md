@@ -31,15 +31,14 @@
    - **Pseudobulk LMM**: Models power for paired designs using pseudobulk aggregation.
    - **Dropout Modeling**: Simulates rare cell type detection based on sequencing depth and abundance.
 
-### 5. **Customizable Endpoints**
-   - Define custom biomarkers with specific units, directionality, and baseline means.
-
-### 6. **Longitudinal Spatial Power Planning (PoweREST) — [LATEST UPDATE]**
+### 5. **Longitudinal Spatial Power Planning (PoweREST)**
    - **Methodology**: Implements the **PoweREST** hierarchical framework for Spatial Transcriptomics (ST).
-   - **Strict Design Sync**: Visual simulation and sensitivity curves are strictly bounded by the planned study duration ($T$).
-   - **Hierarchical Variance**: Models variance decomposition across Subjects, Slices, and Technical replicates.
-   - **Tissue Dynamics**: Interactive simulation of tissue remodeling (e.g., immune infiltration) across clinical timepoints.
+   - **Hierarchical Variance**: Models variance decomposition across **Subjects ($\sigma^2_p$)**, **Slices ($\sigma^2_s$)**, and **Technical replicates ($\sigma^2_t$)**.
+   - **Longitudinal Gain**: Mathematically models the statistical benefit of repeated measures: $G_{lon} = 1 + (T-1)\rho$.
+   - **Tissue Dynamics**: Interactive Canvas-based simulation of tissue remodeling (e.g., immune infiltration) across clinical timepoints.
    - **Efficiency Frontier**: Optimize N vs. Cost vs. Power across platforms like Xenium, Visium, and CosMx.
+   - **Slide-Ready Reporting**: Full y-axis labeling on sensitivity and efficiency plots for protocol publication.
+   - **Export Engine**: Export raw data to CSV or generate a comprehensive **Statistical White-Paper Report** via the Print/PDF engine.
 
 ---
 
@@ -64,29 +63,14 @@ npm run dev
 # or
 npm start
 ```
-The application will typically be available at `http://localhost:5173` (depending on your environment).
-
----
-
-## 📖 How to Use
-
-### **Dashboard Navigation**
-- Use the top navigation tabs to switch between analytics and planning modules.
-- Upload your own data using the **Upload** button (supports .csv and .json).
-
-### **Spatial Power Planning**
-1. Navigate to the **Spatial (ST)** tab.
-2. Select your **Assay Platform** (e.g., 10x Xenium) to load cost and resolution presets.
-3. Use the **Trial Design** slider to set the planned study duration (Wk 4 to Wk 52).
-4. **Design Constraint**: Note that the "Interim Analysis" and "Tissue Simulation" are automatically restricted to the duration you select.
-5. Observe the **Tissue Dynamics Simulation** to visualize disease remodeling over time.
-6. Adjust the **Interim Analysis** dropdown to see how power is impacted if the study ends at an earlier timepoint.
+The application will typically be available at `http://localhost:5173`.
 
 ---
 
 ## 🛠️ Tech Stack
 - **Frontend**: React 19, TypeScript, Tailwind CSS
-- **Charts**: Recharts
+- **Charts**: Recharts (with explicit SVG labeling and responsive margins)
+- **Simulations**: High-performance HTML5 Canvas
 - **Icons**: Lucide React
 - **Statistics**: Custom normal distribution and hierarchical power engines inspired by the PoweREST framework.
 

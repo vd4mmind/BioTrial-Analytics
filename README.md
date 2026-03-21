@@ -4,79 +4,93 @@
   <br />
   <h1>BioTrial Analytics</h1>
   <p>
-    <b>A professional clinical trial visualization dashboard for analyzing biomarker trends across study arms.</b>
+    <b>Precision Clinical Trial Visualization & Multi-Omics Power Planning</b>
+  </p>
+  
+  <p>
+    <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react" alt="React" />
+    <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=flat-square&logo=tailwind-css" alt="Tailwind" />
+    <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
   </p>
 </div>
 
 ---
 
-## 🚀 Features
+## 🔬 Overview
 
-### 1. **Simulated Cohorts (Data Dashboard)**
-   - Instantly generate realistic Phase IIb clinical trial data for **N=600 patients**.
-   - **Configurable Scenarios**: Standard Efficacy, Mixed Results, Failed Trial, and High Placebo.
-   - Comparison across three arms: **Placebo**, **Drug X 1mg**, and **Drug X 2mg**.
+**BioTrial Analytics** is a high-fidelity clinical trial simulation and power planning platform. It bridges the gap between **retrospective discovery** (visualizing longitudinal biomarker trends) and **prospective study design** (calculating statistical power for high-dimensional omics).
 
-### 2. **Advanced Analytics & Visualization**
-   - **Trend Charts**: Longitudinal Mean ± SEM over 24 weeks with Log Scale support.
-   - **Distribution Plots**: Scatter plots for patient-level variability.
-   - **AUC Analysis**: Automated Area Under the Curve calculation via the trapezoidal rule.
-
-### 3. **Statistical Power Calculator (Proteomics)**
-   - Plan studies for **ELISA, Olink, and SomaScan**.
-   - Accounts for **Biological Variability** vs Technical Noise.
-   - Applies **Bonferroni Correction** for high-multiplex proteomics (up to 7000+ analytes).
-
-### 4. **Single Cell (scRNA-seq) Power Analysis**
-   - **Pseudobulk LMM**: Models power for paired designs using pseudobulk aggregation.
-   - **Dropout Modeling**: Simulates rare cell type detection based on sequencing depth and abundance.
-
-### 5. **Longitudinal Spatial Power Planning (PoweREST)**
-   - **Methodology**: Implements the **PoweREST** hierarchical framework for Spatial Transcriptomics (ST).
-   - **Hierarchical Variance**: Models variance decomposition across **Subjects ($\sigma^2_p$)**, **Slices ($\sigma^2_s$)**, and **Technical replicates ($\sigma^2_t$)**.
-   - **Longitudinal Gain**: Mathematically models the statistical benefit of repeated measures: $G_{lon} = 1 + (T-1)\rho$.
-   - **Tissue Dynamics**: Interactive Canvas-based simulation of tissue remodeling (e.g., immune infiltration) across clinical timepoints.
-   - **Efficiency Frontier**: Optimize N vs. Cost vs. Power across platforms like Xenium, Visium, and CosMx.
-   - **Slide-Ready Reporting**: Full y-axis labeling on sensitivity and efficiency plots for protocol publication.
-   - **Export Engine**: Export raw data to CSV or generate a comprehensive **Statistical White-Paper Report** via the Print/PDF engine.
+Built for biostatisticians and clinical researchers, the platform implements the **PoweREST** framework for hierarchical spatial modeling and advanced multiplicity correction for proteomics and metabolomics.
 
 ---
 
-## 💻 Local Development
+## 🏗️ Core Pillars
 
-Follow these steps to run the application on your local machine:
+### 1. **Clinical Discovery Dashboard (Retrospective)**
+*   **Simulated Cohorts**: Generate realistic Phase IIb data for **N=600 patients** across three study arms (Placebo, Drug X 1mg, Drug X 2mg).
+*   **Longitudinal Trends**: Visualize Mean ± SEM over 24 weeks with support for Log Scale and % Change from Baseline.
+*   **Pharmacodynamics**: Automated **AUC (Area Under the Curve)** calculation using the trapezoidal rule to assess biomarker sustainability.
+*   **Distribution Analysis**: Patient-level scatter plots to identify responders vs. non-responders.
+
+### 2. **Multi-Omics Power Designer (Prospective)**
+*   **Proteomics**: Support for **ELISA, Olink, and SomaScan**. Models biological variability vs. technical noise.
+*   **Metabolomics & Lipidomics**: Plan discovery studies for **Metabolon, Nightingale, and Biocrates**. 
+*   **Multiplicity Tax**: Integrated **Bonferroni, FDR, and FWER** correction engines to handle high-plex platforms (up to 7000+ analytes).
+*   **Correlation Modeling**: Accounts for feature-level correlation in lipidomics to optimize class-level enrichment power.
+
+### 3. **Single-Cell & Spatial Transcriptomics**
+*   **scRNA-seq (Pseudobulk LMM)**: Models power for paired designs using pseudobulk aggregation and rare cell type detection constraints.
+*   **Spatial Power (PoweREST)**: Implements the hierarchical variance framework:
+    *   **Variance Decomposition**: Subjects ($\sigma^2_p$), Slices ($\sigma^2_s$), and Technical replicates ($\sigma^2_t$).
+    *   **Longitudinal Gain**: Models the statistical benefit of repeated measures: $G_{lon} = 1 + (T-1)\rho$.
+*   **Tissue Dynamics**: Interactive Canvas-based simulation of tissue remodeling and immune infiltration.
+
+---
+
+## 📐 Statistical Framework
+
+BioTrial Analytics isn't just a UI; it's a statistical engine.
+- **Hierarchical Modeling**: Uses nested variance components for spatial and single-cell designs.
+- **Noise Calibration**: Pre-calibrated noise profiles for major omics platforms (e.g., Olink Explore, SomaScan v4).
+- **Efficiency Frontier**: Automated optimization of Subject N vs. Slice Count vs. Cost to find the precision-budgeting "sweet spot."
+
+---
+
+## 💻 Tech Stack
+
+- **Frontend**: React 19 (Functional Components, Hooks)
+- **State Management**: Context API & Optimized Local State
+- **Visualization**: Recharts (Custom SVG labeling) & HTML5 Canvas (High-performance simulations)
+- **Styling**: Tailwind CSS (Mobile-first, responsive design)
+- **Icons**: Lucide React
+- **Type Safety**: Strict TypeScript 5.x
+
+---
+
+## 🚀 Getting Started
 
 ### **1. Prerequisites**
-- Install [Node.js](https://nodejs.org/) (version 18.0 or higher recommended).
-- A modern web browser with ESM support.
+- [Node.js](https://nodejs.org/) (v18.0+)
+- NPM or Yarn
 
 ### **2. Installation**
-Clone the repository or download the source files, then navigate to the project root and install the necessary dependencies:
 ```bash
+git clone https://github.com/your-repo/biotrial-analytics.git
+cd biotrial-analytics
 npm install
 ```
 
-### **3. Running the App**
-Start the local development server:
+### **3. Development**
 ```bash
 npm run dev
-# or
-npm start
 ```
-The application will typically be available at `http://localhost:5173`.
-
----
-
-## 🛠️ Tech Stack
-- **Frontend**: React 19, TypeScript, Tailwind CSS
-- **Charts**: Recharts (with explicit SVG labeling and responsive margins)
-- **Simulations**: High-performance HTML5 Canvas
-- **Icons**: Lucide React
-- **Statistics**: Custom normal distribution and hierarchical power engines inspired by the PoweREST framework.
+The app will be available at `http://localhost:3000`.
 
 ---
 
 ## 👤 Developer
-**Vivek Das** | *Functional Prototype Development*
+**Vivek Das** | *Expert Functional Prototype Development*
 
-> *Disclaimer: This application is a functional prototype. All data and power estimates are simulated and should not be used for actual clinical decision-making.*
+> [!IMPORTANT]
+> **Disclaimer**: This application is a functional prototype. All data and power estimates are simulated and should not be used for actual clinical decision-making without independent statistical validation.

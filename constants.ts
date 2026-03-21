@@ -1,5 +1,64 @@
 
-import { BiomarkerCategory, BiomarkerDef, Arm, Timepoint } from './types';
+import { BiomarkerCategory, BiomarkerDef, Arm, Timepoint, OmicsPlatform, OmicsModality } from './types';
+
+export const OMICS_PLATFORMS: OmicsPlatform[] = [
+  // Metabolomics
+  {
+    id: 'metabolon-global',
+    name: 'Global Discovery Panel',
+    company: 'Metabolon',
+    modality: OmicsModality.METABOLOMICS,
+    typicalFeatures: 1500,
+    medianCV: 0.15,
+    description: 'Untargeted discovery of ~1,500 metabolites. High coverage, moderate variance.'
+  },
+  {
+    id: 'biocrates-p500',
+    name: 'AbsoluteIDQ p500',
+    company: 'Biocrates',
+    modality: OmicsModality.METABOLOMICS,
+    typicalFeatures: 500,
+    medianCV: 0.08,
+    description: 'Targeted absolute quantification of 500 metabolites. Highly reproducible.'
+  },
+  {
+    id: 'nightingale-nmr',
+    name: 'NMR Biomarker Panel',
+    company: 'Nightingale Health',
+    modality: OmicsModality.METABOLOMICS,
+    typicalFeatures: 250,
+    medianCV: 0.05,
+    description: 'NMR-based quantification of lipoproteins and small molecules. Low variance.'
+  },
+  // Lipidomics
+  {
+    id: 'sciex-lipidyzer',
+    name: 'Lipidyzer Platform',
+    company: 'Sciex',
+    modality: OmicsModality.LIPIDOMICS,
+    typicalFeatures: 1100,
+    medianCV: 0.07,
+    description: 'Quantitative species-level lipidomics. Gold standard for precision.'
+  },
+  {
+    id: 'lipotype-shotgun',
+    name: 'Shotgun Lipidomics',
+    company: 'Lipotype',
+    modality: OmicsModality.LIPIDOMICS,
+    typicalFeatures: 600,
+    medianCV: 0.10,
+    description: 'High-throughput lipid fingerprinting. Ideal for large population cohorts.'
+  },
+  {
+    id: 'thermo-lcms',
+    name: 'High-Res LC-MS',
+    company: 'Thermo Fisher',
+    modality: OmicsModality.LIPIDOMICS,
+    typicalFeatures: 2000,
+    medianCV: 0.18,
+    description: 'Deep discovery lipidomics. High sensitivity but higher sparsity/noise.'
+  }
+];
 
 export const BIOMARKERS: BiomarkerDef[] = [
   // Inflammation

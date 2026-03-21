@@ -1,5 +1,5 @@
 {
   "name": "BioTrial Analytics",
-  "description": "A clinical trial visualization dashboard for analyzing biomarker trends across study arms using simulated or uploaded data.",
+  "description": "A clinical trial visualization and precision medicine decision dashboard for analyzing biomarker trends and performing SOTA power analysis for metabolomics and lipidomics.",
   "requestFramePermissions": []
 }

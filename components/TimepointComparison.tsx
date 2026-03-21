@@ -244,7 +244,7 @@ export const TimepointComparison: React.FC<TimepointComparisonProps> = ({ data, 
               <Legend wrapperStyle={{ paddingTop: '20px' }} />
               <ReferenceLine y={0} stroke="#94a3b8" />
               {Object.values(Arm).map(arm => (
-                <Bar key={arm} dataKey={arm} name={arm} fill={ARM_COLORS[arm]} radius={[4, 4, 0, 0]}>
+                <Bar key={arm} dataKey={arm as string} name={arm} fill={ARM_COLORS[arm]} radius={[4, 4, 0, 0]}>
                     <ErrorBar dataKey={`${arm}_error`} width={4} strokeWidth={2} stroke="rgba(0,0,0,0.5)" />
                 </Bar>
               ))}
@@ -281,7 +281,7 @@ export const TimepointComparison: React.FC<TimepointComparisonProps> = ({ data, 
                 <Area 
                   key={arm} 
                   type="linear" 
-                  dataKey={arm} 
+                  dataKey={arm as string} 
                   name={arm}
                   stroke={ARM_COLORS[arm]} 
                   fill={ARM_COLORS[arm]} 

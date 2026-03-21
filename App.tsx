@@ -6,7 +6,7 @@ import {
   SimulationConfig, 
   SCENARIO_PRESETS 
 } from './services/simulation';
-import { PatientData, BiomarkerDef, Timepoint, Arm, Measurement } from './types';
+import { PatientData, BiomarkerDef, Timepoint, Arm, Measurement, AppTab } from './types';
 import { BIOMARKERS, TIMEPOINT_ORDER } from './constants';
 import { TrendChart } from './components/TrendChart';
 import { DistributionChart } from './components/DistributionChart';
@@ -16,6 +16,7 @@ import { AddBiomarkerModal } from './components/AddBiomarkerModal';
 import { PowerCalculator } from './components/PowerCalculator';
 import { SingleCellPower } from './components/SingleCellPower';
 import { SpatialPower } from './components/SpatialPower';
+import { OmicsPowerDesigner } from './components/OmicsPowerDesigner';
 import { AboutModal } from './components/AboutModal';
 import { FeedbackModal } from './components/FeedbackModal';
 import { AdminStatsModal } from './components/AdminStatsModal';
@@ -39,10 +40,9 @@ import {
   Shield,
   Dna,
   Map,
-  ArrowRight
+  ArrowRight,
+  Zap
 } from 'lucide-react';
-
-type AppTab = 'dashboard' | 'power' | 'singlecell' | 'spatial';
 
 // --- Helper Functions for Data Processing ---
 
@@ -151,9 +151,9 @@ const Header: React.FC<{
         onUpload(processedData);
         analytics.logEvent('DATA_UPLOAD', { fileName, patientCount: processedData.length });
         
-        if (activeTab !== 'dashboard') {
+        if (activeTab !== AppTab.DASHBOARD) {
           if (confirm(`Successfully processed ${processedData.length} records. Would you like to switch to the Dashboard to view your uploaded biomarker trends?`)) {
-            setActiveTab('dashboard');
+            setActiveTab(AppTab.DASHBOARD);
           }
         } else {
           alert(`Successfully uploaded records for ${processedData.length} patients.`);
@@ -166,7 +166,7 @@ const Header: React.FC<{
     event.target.value = '';
   };
 
-  const isDashboard = activeTab === 'dashboard';
+  const isDashboard = activeTab === AppTab.DASHBOARD;
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4">
@@ -183,40 +183,49 @@ const Header: React.FC<{
 
         <div className="flex bg-slate-100 p-1 rounded-lg self-start md:self-center overflow-x-auto max-w-full">
            <button
-             onClick={() => setActiveTab('dashboard')}
+             onClick={() => setActiveTab(AppTab.DASHBOARD)}
              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
-               activeTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+               activeTab === AppTab.DASHBOARD ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
              }`}
            >
              <BarChart2 size={16} />
              Dashboard
            </button>
            <button
-             onClick={() => setActiveTab('power')}
+             onClick={() => setActiveTab(AppTab.POWER)}
              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
-               activeTab === 'power' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+               activeTab === AppTab.POWER ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
              }`}
            >
              <Calculator size={16} />
              Protein/Biomarker Power Calc
            </button>
            <button
-             onClick={() => setActiveTab('singlecell')}
+             onClick={() => setActiveTab(AppTab.SINGLE_CELL)}
              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
-               activeTab === 'singlecell' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+               activeTab === AppTab.SINGLE_CELL ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
              }`}
            >
              <Dna size={16} />
              scRNA-seq
            </button>
            <button
-             onClick={() => setActiveTab('spatial')}
+             onClick={() => setActiveTab(AppTab.SPATIAL)}
              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
-               activeTab === 'spatial' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+               activeTab === AppTab.SPATIAL ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
              }`}
            >
              <Map size={16} />
              Spatial (ST)
+           </button>
+           <button
+             onClick={() => setActiveTab(AppTab.OMICS)}
+             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
+               activeTab === AppTab.OMICS ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+             }`}
+           >
+             <Zap size={16} />
+             Metabolomics/Lipidomics
            </button>
         </div>
 
@@ -312,7 +321,7 @@ const Footer: React.FC<{ onOpenAdmin: () => void }> = ({ onOpenAdmin }) => (
 );
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<AppTab>(AppTab.DASHBOARD);
   const [biomarkers, setBiomarkers] = useState<BiomarkerDef[]>(BIOMARKERS);
   const [data, setData] = useState<PatientData[]>([]);
   const [selectedBiomarkerId, setSelectedBiomarkerId] = useState<string>(BIOMARKERS[0].id);
@@ -355,7 +364,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col">
       <Header onUpload={setData} activeTab={activeTab} setActiveTab={setActiveTab} onOpenFeedback={() => setIsFeedbackModalOpen(true)} />
       <main className="container mx-auto px-6 py-8 max-w-7xl flex-grow">
-        {activeTab === 'dashboard' && (
+        {activeTab === AppTab.DASHBOARD && (
           <>
             <SimulationConfigCard config={simulationConfig} onConfigChange={setSimulationConfig} onRegenerate={loadData} isLoading={loading} />
             <section className="mb-10 animate-in fade-in duration-700">
@@ -364,6 +373,35 @@ const App: React.FC = () => {
                 <h2 className="text-xl font-bold text-slate-800">Study Overview</h2>
               </div>
               {loading ? <div className="h-64 bg-white rounded-xl shadow-sm animate-pulse border border-slate-200"></div> : <BiomarkerOverview data={data} biomarkers={biomarkers} />}
+            </section>
+
+            <section className="mb-10 animate-in fade-in duration-800">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl p-6 text-white shadow-lg shadow-cyan-100 group cursor-pointer hover:scale-[1.02] transition-all" onClick={() => setActiveTab(AppTab.OMICS)}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md">
+                      <Zap size={24} />
+                    </div>
+                    <ArrowRight size={20} className="opacity-0 group-hover:opacity-100 transition-all" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Metabolomics Discovery</h3>
+                  <p className="text-cyan-50 text-sm leading-relaxed opacity-90">
+                    Map systemic metabolic flux and energy pathways. Optimized for high feature independence and FDR control.
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-100 group cursor-pointer hover:scale-[1.02] transition-all" onClick={() => setActiveTab(AppTab.OMICS)}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md">
+                      <Layers size={24} />
+                    </div>
+                    <ArrowRight size={20} className="opacity-0 group-hover:opacity-100 transition-all" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Lipidomics Insight</h3>
+                  <p className="text-indigo-50 text-sm leading-relaxed opacity-90">
+                    Analyze membrane integrity and signaling lipids. Leverages high feature correlation for class-level enrichment.
+                  </p>
+                </div>
+              </div>
             </section>
             <section className="mb-10 animate-in fade-in duration-1000">
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
@@ -399,9 +437,10 @@ const App: React.FC = () => {
             </section>
           </>
         )}
-        {activeTab === 'power' && <PowerCalculator />}
-        {activeTab === 'singlecell' && <SingleCellPower />}
-        {activeTab === 'spatial' && <SpatialPower />}
+        {activeTab === AppTab.POWER && <PowerCalculator />}
+        {activeTab === AppTab.SINGLE_CELL && <SingleCellPower />}
+        {activeTab === AppTab.SPATIAL && <SpatialPower />}
+        {activeTab === AppTab.OMICS && <OmicsPowerDesigner />}
       </main>
       <Footer onOpenAdmin={() => setIsAdminModalOpen(true)} />
       <AddBiomarkerModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onAdd={handleAddBiomarker} />

@@ -21,7 +21,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-indigo-400/30 text-[10px] font-bold px-2 py-0.5 rounded border border-indigo-300/30 uppercase tracking-widest">
-                v2.1 Precision Update
+                v2.2 Omics Update
               </span>
             </div>
             <h2 className="text-3xl font-bold mb-2 tracking-tight text-white">BioTrial Analytics</h2>
@@ -52,7 +52,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
               <div>
                 <h4 className="font-semibold text-slate-900 text-lg">Simulated Cohorts</h4>
                 <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                  Generate realistic Phase IIb data for N=600. Model standard efficacy, mixed populations, or failed trial scenarios.
+                  Generate realistic Phase IIb data for N=600. Model standard efficacy, mixed populations, or failed trial scenarios. Includes support for custom endpoints.
                 </p>
               </div>
             </div>
@@ -94,13 +94,13 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             </div>
 
              <div className="flex gap-4 group">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-amber-100">
-                <Zap size={24} />
+              <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600 shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-cyan-100">
+                <Microscope size={24} />
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900 text-lg">Custom Biomarkers</h4>
+                <h4 className="font-semibold text-slate-900 text-lg">Metabolomics & Lipidomics</h4>
                 <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                  Dynamically add endpoints with specific units, directionality, and baseline targets to suit your specific study needs.
+                  Plan discovery studies using SOTA platforms (Metabolon, Nightingale, Biocrates). Features platform-aware power modeling that accounts for technical CV% and feature correlation.
                 </p>
               </div>
             </div>
